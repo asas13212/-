@@ -7,11 +7,30 @@
     <groupId>com.ncu.cao</groupId>
     <artifactId>healthysystem</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>Common</module>
+        <module>AccessModule</module>
+        <module>AdminModule</module>
+        <module>PatientModule</module>
+        <module>FeeModule</module>
+        <module>ReportModule</module>
+        <module>MainModule</module>
+    </modules>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.28</version>
+        </dependency>
+    </dependencies>
 
 </project>
