@@ -13,7 +13,6 @@
         <module>AccessModule</module>
         <module>AdminModule</module>
         <module>PatientModule</module>
-        <module>FeeModule</module>
         <module>ReportModule</module>
         <module>MainModule</module>
     </modules>
