@@ -2,6 +2,7 @@ package com.ncu.main.view;
 
 import com.ncu.admin.view.AdminFrame;
 import com.ncu.main.controller.MainController;
+import com.ncu.patient.view.PatientHomeFrame;
 import com.ncu.main.model.CurrentUser;
 
 import javax.swing.BorderFactory;
@@ -180,7 +181,8 @@ public class LoginFrame extends JFrame
         switch (u.getRole())
         {
             case 0:
-                JOptionPane.showMessageDialog(this, "【患者端】暂未接入（由其他同学负责开发）。");
+                dispose();
+                new PatientHomeFrame(u.getTel(), u.getName()).setVisible(true);
                 break;
             case 1:
                 JOptionPane.showMessageDialog(this, "【医生端】暂未接入（由其他同学负责开发）。");

@@ -21,19 +21,19 @@
 
 ## 2. 技术栈与模块结构
 
-JDK 17 + Maven 多模块 + MySQL 8 + JDBC（无框架）+ Swing。
+JDK 17 + Maven 多模块 + MySQL 8 + JDBC（无框架）+ Swing + OpenPDF（报告导出 PDF）。
 
 ```
 healthysystem（父 pom）
 ├─ Common        实体/DAO/JdbcUtil ——✅已完成，谁都能依赖
 ├─ MainModule    系统总入口：含唯一登录窗（背景图）+ 登录后按 role 打开各模块主窗 ——✅已跑通(管理员)
 ├─ AdminModule   后台：管理员(role2)+医生(role1) ——🟡基本完成(检查项/套餐/用户/预约/结果录入)
-├─ PatientModule 患者端 ——⬜待开发
-├─ ReportModule  报告模块 ——⬜待开发
+├─ PatientModule 患者端 ——🟡基本完成(套餐浏览/预约/结果/资料/打印报告)
+├─ ReportModule  报告模块 ——🟡基本完成(报告预览/打印/导出PDF)
 └─ Sources/      设计素材源图（如登录背景 login-bg-source.png）
 ```
 
-依赖关系（都不成环）：`Common` ← `AdminModule`；`MainModule` 依赖 `Common + AdminModule`（将来患者/报告模块做好，MainModule 再加对应依赖以便按 role 打开它们的主窗）。
+依赖关系（都不成环）：`Common` 被各模块依赖；`AdminModule`→Common；`ReportModule`→Common(+OpenPDF)；`PatientModule`→Common+ReportModule；`MainModule`→Common+AdminModule+PatientModule。
 
 ---
 
@@ -65,11 +65,11 @@ healthysystem（父 pom）
 | 模块 | 状态 | 职责 |
 |:---|:---|:---|
 | **Common** | ✅ 完成 | 6 实体、6 DAO、`JdbcUtil`。需要读写先查 §5，别重复造轮子。 |
-| **MainModule** | ✅ 登录入口已通 | 唯一登录窗（手机号+密码，背景图在 `MainModule/src/main/resources/login_background.png`，源图在 `Sources/login-bg-source.png`）。登录成功按 role 打开对应主窗：role2→`AdminFrame`；role0/1 目前提示"待接入"，等患者/医生主窗就绪后在这改。**各角色模块不再自己做登录。** |
+| **MainModule** | ✅ 登录入口已通 | 唯一登录窗（手机号+密码，背景图在 `MainModule/src/main/resources/login_background.png`，源图在 `Sources/login-bg-source.png`）。登录成功按 role 打开对应主窗：role2→`AdminFrame`；role0→`PatientHomeFrame`（已接）；role1 医生入口待接入。**各角色模块不再自己做登录。** |
 | **AdminModule** | 🟡 基本完成 | **管理员(role2)**：维护检查项/套餐及关联、用户管理、预约状态（`AdminFrame` 五个页签）。**医生(role1)**：给预约录 `check_result`（"结果录入"页签已实现，医生入口待队长安排接入）。 |
-| **PatientModule** | ⬜ 待开发 | 患者：浏览套餐、预约/取消、看自己结果/报告、改资料。**要给 MainModule 提供一个患者主窗类**。 |
-| **ReportModule** | ⬜ 待开发 | 按预约汇总结果出报告（打印/导出）。 |
-| **MainModule 的 role 分发** | 需要补 | `MainModule/view/LoginFrame.java` 的 `onLogin()` switch：把 case 0/1 接上 Patient 主窗 / 医生（AdminModule 结果录入）入口。 |
+| **PatientModule** | 🟡 基本完成 | 患者：浏览套餐、预约/取消、看自己结果、改资料；主窗 `PatientHomeFrame(tel,name)` 已接 LoginFrame。报告入口在「我的结果」→ 打印报告（打开 `ReportFrame`）。 |
+| **ReportModule** | 🟡 基本完成 | 按预约汇总结果出报告：预览 + 打印（`java.awt.print`）+ 导出 PDF（OpenPDF）。中文用内置 `STSong-Light`，无需额外字体。 |
+| **MainModule 的 role 分发** | 🟡 部分完成 | `LoginFrame.onLogin()` switch：case 0 已接 `PatientHomeFrame`；case 1 医生（AdminModule 结果录入）入口仍待接。 |
 
 > 具体功能清单以队长分工说明为准，本表是模块定位。
 
