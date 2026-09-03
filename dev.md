@@ -29,11 +29,12 @@ healthysystem（父 pom）
 ├─ MainModule    系统总入口：含唯一登录窗（背景图）+ 登录后按 role 打开各模块主窗 ——✅已跑通(管理员)
 ├─ AdminModule   后台：管理员(role2)+医生(role1) ——🟡基本完成(检查项/套餐/用户/预约/结果录入)
 ├─ PatientModule 患者端 ——⬜待开发
+├─ FeeModule     收费管理(队长维护)：待收费登记/收费记录/退款 ——✅已完成，独立运行 FeeMain
 ├─ ReportModule  报告模块 ——⬜待开发
 └─ Sources/      设计素材源图（如登录背景 login-bg-source.png）
 ```
 
-依赖关系（都不成环）：`Common` ← `AdminModule`；`MainModule` 依赖 `Common + AdminModule`（将来患者/报告模块做好，MainModule 再加对应依赖以便按 role 打开它们的主窗）。
+依赖关系（都不成环）：`Common` ← `AdminModule`、`Common` ← `FeeModule`；`MainModule` 依赖 `Common + AdminModule`（将来患者/报告/收费等做好，MainModule 再加对应依赖以便按 role/入口打开各自主窗）。
 
 ---
 
@@ -47,6 +48,7 @@ healthysystem（父 pom）
 | `checkgroup_item` | `CheckGroupItem` | 套餐-检查项关联 |
 | `registration` | `Registration` | 患者对套餐的预约（0已约/1已完成/2已取消） |
 | `check_result` | `CheckResult` | 一次预约里各项的结果值（报告数据源） |
+| `fee` | `Fee` | 收费(队长新增)：一条预约一次收费 |
 
 **业务链路**：管理员先维护检查项/套餐 → 患者预约（写 `registration`）→ 医生对预约逐项录结果（写 `check_result`）→ 预约标记完成 → ReportModule 汇总出报告 → 患者查看。
 
@@ -57,6 +59,7 @@ healthysystem（父 pom）
 - **checkgroup_item**：`id`(自增) `gid`→checkgroup `cid`→checkitem
 - **registration**：`id`(自增) `tel`→users `gid`→checkgroup `reg_time` `status`
 - **check_result**：`id`(自增) `reg_id`→registration `tel`→users `cid`→checkitem `result_value` `doctor_tel` `check_time`
+- **fee**：`id`(自增) `reg_id`→registration `tel`→users `gid`→checkgroup `amount`(金额,元) `status`(0待缴|1已缴|2已退款) `pay_time` `operator`(收费员账号) `remark`
 
 ---
 
@@ -67,6 +70,7 @@ healthysystem（父 pom）
 | **Common** | ✅ 完成 | 6 实体、6 DAO、`JdbcUtil`。需要读写先查 §5，别重复造轮子。 |
 | **MainModule** | ✅ 登录入口已通 | 唯一登录窗（手机号+密码，背景图在 `MainModule/src/main/resources/login_background.png`，源图在 `Sources/login-bg-source.png`）。登录成功按 role 打开对应主窗：role2→`AdminFrame`；role0/1 目前提示"待接入"，等患者/医生主窗就绪后在这改。**各角色模块不再自己做登录。** |
 | **AdminModule** | 🟡 基本完成 | **管理员(role2)**：维护检查项/套餐及关联、用户管理、预约状态（`AdminFrame` 五个页签）。**医生(role1)**：给预约录 `check_result`（"结果录入"页签已实现，医生入口待队长安排接入）。 |
+| **FeeModule** | ✅ 已完成(队长) | 收费台：对"已预约且尚未收费"的预约收费入账（写 `fee`，状态 1 已缴）、查看收费记录、退款（置 2 已退款）。独立入口 `com.ncu.fee.FeeMain`（收费员=data.sql 管理员 13800138000）。收费员本质是管理员，将来要并入系统入口时由队长接入（把 `ChargePanel`/`FeeFrame` 挂到管理员入口即可）。 |
 | **PatientModule** | ⬜ 待开发 | 患者：浏览套餐、预约/取消、看自己结果/报告、改资料。**要给 MainModule 提供一个患者主窗类**。 |
 | **ReportModule** | ⬜ 待开发 | 按预约汇总结果出报告（打印/导出）。 |
 | **MainModule 的 role 分发** | 需要补 | `MainModule/view/LoginFrame.java` 的 `onLogin()` switch：把 case 0/1 接上 Patient 主窗 / 医生（AdminModule 结果录入）入口。 |
@@ -90,16 +94,26 @@ DAO 都是直连 JDBC 的简单类，`new XxxDao()` 即用：
 
 > 需要"按主键查某条 / 联表带名称"这类 Common 没有的方法时，参照 `AdminModule/dao/AdminDao.java` 的写法，在**自己模块**里补一个 Dao，别改 Common 里已有的（避免大家冲突）。
 
+> **fee 是队长新增的表**：实体 `com.ncu.common.model.Fee` 已放 Common；但收费读写目前只有 FeeModule 用，所以 DAO 没进 Common，放在 `FeeModule/dao/FeeDao.java`（含按预约查判重、待收费预约、联表带姓名等）。将来报告/患者端要读收费，由队长把基础 CRUD 提升到 Common。
+
 ---
 
 ## 6. 建库 / 数据 / 配置
 
 - 建库建表：执行根目录 `schema.sql`。
-- **演示数据**：执行根目录 `data.sql`（含 3 个登录账号、10 检查项、3 套餐、2 预约、1 次结果）。登录账号：
+- **数据库已建过、只想加 fee 表**：别整份重跑 schema.sql（表已存在会报错），只执行脚本末尾第 7 段 `fee` 的建表语句即可；fee 演示数据已并入 `data.sql`。
+- **演示数据**：执行根目录 `data.sql`（含 3 个登录账号、10 检查项、3 套餐、2 预约、1 次结果、1 条收费）。**导入 data.sql/schema.sql 时必须用 UTF-8 方式**（如 IDEA 控制台跑、或 `mysql --default-character-set=utf8mb4 < data.sql`），否则中文字段会丢成空串，导致姓名/套餐名/检查项名显示空白。登录账号：
   - 管理员 `13800138000 / 123456`；医生 `13900139000 / 123456`；患者 `13700137000 / 123456`
 - 连库配置在 **Common** `src/main/resources`：
   - `db.properties` = 模板，**只放占位（root/root），禁止把真实密码提交进去**；
   - `db-local.properties` = 你自己机器的真实密码，已被 .gitignore 忽略，`JdbcUtil` 优先读它。
+
+**队长新增了 `fee`（收费）表 → 各模块同学看这里：**
+- **库**：本地库若已建过，只补执行 `schema.sql` 第 7 段的 `fee` 建表语句即可（**别整份重跑** schema.sql，表已存在会报错）。fee 是全新表，不动任何旧表结构。
+- **AdminModule（管理员/医生）**：可选。想让管理员顺手能收费：给 AdminModule 加 `FeeModule` 依赖，在 `AdminFrame` 加一个"收费管理"页签 `new com.ncu.fee.view.ChargePanel(登录管理员tel)`；不想要就先不动，队长已给独立入口 `FeeMain`。
+- **PatientModule（患者端）**：预约/看结果**不用改**。将来想让患者看到"我的缴费记录"，**先跟队长说**，队长把 `FeeDao` 基础方法提升进 Common 你再调。
+- **ReportModule（报告）**：同上，报告想带费用汇总就喊队长提升 Common FeeDao；报告本身可直接读 Common 的 `Fee` 实体。
+- **通用红线**：任何模块想读写 fee，先找队长，统一走 Common 的实体/DAO；**不要各自另写一份 fee DAO**，避免两套逻辑打架。
 
 ---
 

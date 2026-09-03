@@ -71,3 +71,19 @@ CREATE TABLE check_result (
     FOREIGN KEY (tel) REFERENCES users(tel),
     FOREIGN KEY (cid) REFERENCES checkitem(cid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 7. 收费表（一条预约对应一条收费记录；由收费台/管理员对预约收费）
+CREATE TABLE fee (
+    id       INT            AUTO_INCREMENT PRIMARY KEY COMMENT '主键id',
+    reg_id   INT            COMMENT '预约id',
+    tel      VARCHAR(11)    COMMENT '患者账号',
+    gid      VARCHAR(50)    COMMENT '套餐id',
+    amount   DECIMAL(10,2)  COMMENT '收费金额(元)',
+    status   INT            COMMENT '状态:0待缴|1已缴|2已退款',
+    pay_time DATETIME       COMMENT '缴费时间',
+    operator VARCHAR(11)    COMMENT '收费员(管理员)账号',
+    remark   VARCHAR(200)   COMMENT '备注',
+    FOREIGN KEY (reg_id) REFERENCES registration(id),
+    FOREIGN KEY (tel) REFERENCES users(tel),
+    FOREIGN KEY (gid) REFERENCES checkgroup(gid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
