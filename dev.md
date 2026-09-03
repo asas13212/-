@@ -82,6 +82,8 @@ healthysystem（父 pom，聚合下面 6 个模块）
 
 > 具体菜单/功能清单以队长分工时的说明为准，本表给的是模块定位。
 
+**登录界面素材（AccessModule 在用）**：登录窗整窗背景使用 `AccessModule/src/main/resources/login_background.png`（设计源图在仓库根 `Sources/login-bg-source.png`，1920×1080）。界面上**只放「手机号」和「密码」两个输入框**（+登录/重置按钮），叠在背景图中央的半透明卡片上。要换背景：把新图放进 `Sources/`，再同名覆盖 `AccessModule/src/main/resources/login_background.png` 即可（建议 16:9，窗口按宽 920 等比缩放）。
+
 ---
 
 ## 5. Common 能直接给我什么（API 速查）
