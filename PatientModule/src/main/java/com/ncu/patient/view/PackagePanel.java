@@ -2,9 +2,10 @@ package com.ncu.patient.view;
 
 import com.ncu.common.model.CheckGroup;
 import com.ncu.common.model.CheckItem;
+import com.ncu.common.ui.Ui;
 import com.ncu.patient.controller.PatientController;
 
-import javax.swing.JButton;
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -12,7 +13,6 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
@@ -31,6 +31,8 @@ public class PackagePanel extends JPanel
     {
         this.tel = tel;
         setLayout(new BorderLayout());
+        Ui.content(this);
+        setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
 
         tableModel = new DefaultTableModel(columns, 0)
         {
@@ -40,23 +42,17 @@ public class PackagePanel extends JPanel
                 return false;
             }
         };
-        table = new JTable(tableModel);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        table = Ui.table(tableModel);
 
-        JPanel btnPanel = new JPanel();
-        addButton(btnPanel, "刷新", e -> refresh());
-        addButton(btnPanel, "查看明细", e -> showDetail());
-        addButton(btnPanel, "预约", e -> register());
-        add(btnPanel, BorderLayout.SOUTH);
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(null);
+        add(Ui.header("套餐浏览",
+                Ui.actionPrimary("预约", e -> register()),
+                Ui.action("查看明细", e -> showDetail()),
+                Ui.action("刷新", e -> refresh())), BorderLayout.NORTH);
+        add(Ui.card(sp), BorderLayout.CENTER);
 
         refresh();
-    }
-
-    private void addButton(JPanel panel, String text, ActionListener listener)
-    {
-        JButton b = new JButton(text);
-        b.addActionListener(listener);
-        panel.add(b);
     }
 
     private void refresh()

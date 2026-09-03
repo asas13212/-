@@ -139,6 +139,39 @@ public class AdminDao
         return list;
     }
 
+    /** 查询所有「待录入」预约（status=0 已预约），带患者姓名和套餐名称，供结果录入下拉选择 */
+    public List<RegistrationVO> findPendingRegistration()
+    {
+        String sql = "SELECT r.id, r.tel, u.name AS patient_name, r.gid, g.gname AS group_name, r.reg_time, r.status " +
+                "FROM registration r " +
+                "JOIN users u ON u.tel = r.tel " +
+                "JOIN checkgroup g ON g.gid = r.gid " +
+                "WHERE r.status = 0 ORDER BY r.reg_time ASC";
+        List<RegistrationVO> list = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try
+        {
+            conn = JdbcUtil.getConnection();
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+            while (rs.next())
+            {
+                list.add(mapRegVO(rs));
+            }
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            JdbcUtil.close(conn, ps, rs);
+        }
+        return list;
+    }
+
     /** 按主键查预约 */
     public Registration findRegById(int id)
     {

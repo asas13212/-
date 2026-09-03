@@ -1,14 +1,18 @@
 package com.ncu.patient.view;
 
 import com.ncu.common.model.User;
+import com.ncu.common.ui.Ui;
 import com.ncu.patient.controller.PatientController;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -30,39 +34,58 @@ public class ProfilePanel extends JPanel
     public ProfilePanel(String tel)
     {
         this.tel = tel;
-        setLayout(new GridBagLayout());
+        setLayout(new BorderLayout());
+        Ui.content(this);
+        setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
+
+        add(Ui.header("个人资料"), BorderLayout.NORTH);
+
+        // 表单放进白色卡片，整体在上方居中
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setBackground(Ui.CARD_BG);
+        form.setBorder(BorderFactory.createEmptyBorder(20, 30, 18, 30));
 
         GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(8, 8, 8, 8);
-        c.anchor = GridBagConstraints.EAST;
+        c.insets = new Insets(9, 8, 9, 8);
+        addRow(form, c, 0, "账号(手机号)：", new JLabel(tel));
+        addRow(form, c, 1, "姓名：", nameField);
+        addRow(form, c, 2, "身份证：", idcardField);
+        addRow(form, c, 3, "出生日期：", birthdayField);
+        addRow(form, c, 4, "性别：", sexBox);
 
-        addRow(c, 0, "手机号(账号)：", new JLabel(tel));
-        addRow(c, 1, "姓名：", nameField);
-        addRow(c, 2, "身份证：", idcardField);
-        addRow(c, 3, "出生日期：", birthdayField);
-        addRow(c, 4, "性别：", sexBox);
-
-        JButton save = new JButton("保存");
+        JButton save = Ui.primary("保  存");
         save.addActionListener(e -> save());
         c.gridx = 0;
         c.gridy = 5;
         c.gridwidth = 2;
         c.anchor = GridBagConstraints.CENTER;
-        add(save, c);
+        c.fill = GridBagConstraints.NONE;
+        form.add(save, c);
+
+        JPanel holder = new JPanel(new GridBagLayout());
+        holder.setBackground(Ui.CONTENT_BG);
+        GridBagConstraints hc = new GridBagConstraints();
+        hc.gridx = 0;
+        hc.gridy = 0;
+        hc.weightx = 1;
+        hc.weighty = 1;
+        hc.anchor = GridBagConstraints.NORTH;
+        holder.add(Ui.card(form), hc);
+        add(holder, BorderLayout.CENTER);
 
         load();
     }
 
-    private void addRow(GridBagConstraints c, int row, String label, java.awt.Component comp)
+    private void addRow(JPanel panel, GridBagConstraints c, int row, String label, Component comp)
     {
         c.gridx = 0;
         c.gridy = row;
         c.gridwidth = 1;
         c.anchor = GridBagConstraints.EAST;
-        add(new JLabel(label), c);
+        panel.add(new JLabel(label), c);
         c.gridx = 1;
         c.anchor = GridBagConstraints.WEST;
-        add(comp, c);
+        panel.add(comp, c);
     }
 
     private void load()

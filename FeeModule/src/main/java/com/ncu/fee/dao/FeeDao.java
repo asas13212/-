@@ -21,10 +21,14 @@ import java.util.List;
  */
 public class FeeDao
 {
-    /** 查还没有收费记录的预约（status=0 已预约 且 fee 表中无该预约），供"收费登记"用 */
+    /**
+     * 查还没有收费记录的预约（status=0 已预约 且 fee 表中无该预约），供"收费登记"用。
+     * 金额按套餐价入账：JOIN checkgroup 时把 g.price 一并查出，由收费界面直接入账。
+     */
     public List<FeeRegVO> findUnchargedRegs()
     {
-        String sql = "SELECT r.id, r.tel, u.name AS patient_name, r.gid, g.gname AS group_name, r.reg_time " +
+        String sql = "SELECT r.id, r.tel, u.name AS patient_name, r.gid, g.gname AS group_name, " +
+                "g.price AS price, r.reg_time " +
                 "FROM registration r " +
                 "JOIN users u ON u.tel = r.tel " +
                 "JOIN checkgroup g ON g.gid = r.gid " +
@@ -48,6 +52,7 @@ public class FeeDao
                 vo.setPatientName(rs.getString("patient_name"));
                 vo.setGid(rs.getString("gid"));
                 vo.setGroupName(rs.getString("group_name"));
+                vo.setPrice(rs.getBigDecimal("price"));
                 vo.setRegTime(rs.getTimestamp("reg_time"));
                 list.add(vo);
             }

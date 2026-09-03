@@ -123,6 +123,11 @@ public class AdminController
         return adminDao.findAllRegistration();
     }
 
+    public List<RegistrationVO> listPendingRegistrations()
+    {
+        return adminDao.findPendingRegistration();
+    }
+
     public boolean updateRegStatus(int id, int status)
     {
         return adminDao.updateRegStatus(id, status);

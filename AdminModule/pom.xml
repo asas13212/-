@@ -23,6 +23,12 @@
             <artifactId>Common</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!-- 收费模块：把 ChargePanel/FeeListPanel 挂进管理员后台页签（队长） -->
+        <dependency>
+            <groupId>com.ncu.cao</groupId>
+            <artifactId>FeeModule</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>

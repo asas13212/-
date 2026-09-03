@@ -103,7 +103,7 @@ public class UserDao
         return list;
     }
 
-    /** 按角色查用户（0患者|1医生|2管理员） */
+    /** 按角色查用户（0患者|1医生） */
     public List<User> findByRole(int role)
     {
         String sql = "SELECT * FROM users WHERE role = ?";

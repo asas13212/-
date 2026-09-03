@@ -15,7 +15,7 @@ public class Fee
     private BigDecimal amount; // 收费金额(元)
     private int status;        // 状态:0待缴|1已缴|2已退款
     private Date payTime;      // 缴费时间
-    private String operator;   // 收费员(管理员)账号
+    private String operator;   // 收费员(医生)账号
     private String remark;     // 备注
 
     public int getId()
