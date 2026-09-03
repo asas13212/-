@@ -10,7 +10,6 @@
     <packaging>pom</packaging>
     <modules>
         <module>Common</module>
-        <module>AccessModule</module>
         <module>AdminModule</module>
         <module>PatientModule</module>
         <module>ReportModule</module>
