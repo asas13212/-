@@ -39,7 +39,7 @@ public class PackagePanel extends JPanel
     private final JLabel detailRemark = new JLabel();
     private final DefaultTableModel itemModel;
     private final JTable itemTable;
-    private final String[] itemColumns = {"检查项", "单位", "参考范围"};
+    private final String[] itemColumns = {"检查项", "单位", "参考范围", "单价(元)"};
 
     public PackagePanel(String tel)
     {
@@ -153,7 +153,8 @@ public class PackagePanel extends JPanel
         itemModel.setRowCount(0);
         for (CheckItem c : controller.listGroupItems(g.getGid()))
         {
-            itemModel.addRow(new Object[]{c.getCname(), nvl(c.getDw()), nvl(c.getCkfw())});
+            itemModel.addRow(new Object[]{c.getCname(), nvl(c.getDw()), nvl(c.getCkfw()),
+                    formatPrice(c.getPrice())});
         }
     }
 

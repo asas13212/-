@@ -20,10 +20,13 @@ import java.util.List;
  */
 public class PatientDao
 {
-    /** 按主键查套餐（查看套餐详情用） */
+    /** 按主键查套餐（查看套餐详情用）；套餐价=所含各项单价之和（显式列 + SUM 子查询，别名 price） */
     public CheckGroup findGroupByGid(String gid)
     {
-        String sql = "SELECT * FROM checkgroup WHERE gid = ?";
+        String sql = "SELECT g.gid, g.gname, g.bh, g.remark, g.status, "
+                + "(SELECT IFNULL(SUM(ci.price), 0) FROM checkgroup_item gi "
+                + "  JOIN checkitem ci ON ci.cid = gi.cid WHERE gi.gid = g.gid) AS price "
+                + "FROM checkgroup g WHERE g.gid = ?";
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -283,6 +286,7 @@ public class PatientDao
         c.setCname(rs.getString("cname"));
         c.setDw(rs.getString("dw"));
         c.setCkfw(rs.getString("ckfw"));
+        c.setPrice(rs.getBigDecimal("price"));
         c.setStatus(rs.getInt("status"));
         return c;
     }

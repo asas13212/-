@@ -9,7 +9,8 @@ public class Registration
 {
     private int id;          // 主键id
     private String tel;      // 患者账号
-    private String gid;      // 检查组id
+    private String gid;      // 套餐id(单项预约时为空)
+    private String cid;      // 检查项id(单项预约时用;套餐预约时为空)
     private Date regTime;    // 预约时间
     private int status;      // 状态:0已预约|1已完成|2已取消
 
@@ -41,6 +42,16 @@ public class Registration
     public void setGid(String gid)
     {
         this.gid = gid;
+    }
+
+    public String getCid()
+    {
+        return cid;
+    }
+
+    public void setCid(String cid)
+    {
+        this.cid = cid;
     }
 
     public Date getRegTime()

@@ -150,6 +150,22 @@ public class CheckResultPanel extends JPanel
         return controller.findRegById(regId);
     }
 
+    /** 一条预约要录入结果的检查项集：套餐预约=所含各项；单项预约(gid 空)=该项自身(cid) */
+    private List<CheckItem> neededItems(Registration reg)
+    {
+        if (reg.getGid() != null)
+        {
+            return controller.listGroupItems(reg.getGid());
+        }
+        List<CheckItem> single = new ArrayList<>();
+        CheckItem it = controller.findItem(reg.getCid());
+        if (it != null)
+        {
+            single.add(it);
+        }
+        return single;
+    }
+
     private void querySelected()
     {
         int regId = selectedRegId();
@@ -218,10 +234,10 @@ public class CheckResultPanel extends JPanel
             refresh();
             return;
         }
-        List<CheckItem> needed = controller.listGroupItems(reg.getGid());
+        List<CheckItem> needed = neededItems(reg);
         if (needed.isEmpty())
         {
-            JOptionPane.showMessageDialog(this, "该套餐没有检查项，无法自动生成");
+            JOptionPane.showMessageDialog(this, "该项目下没有可录入的检查项，无法自动生成");
             return;
         }
         int added = autoFill(reg, needed);
@@ -342,7 +358,7 @@ public class CheckResultPanel extends JPanel
     {
         Registration reg = controller.findRegById(regId);
         if (reg == null || reg.getStatus() != 0) return;
-        List<CheckItem> needed = controller.listGroupItems(reg.getGid());
+        List<CheckItem> needed = neededItems(reg);
         if (needed.isEmpty()) return;
         Set<String> recorded = new HashSet<>();
         for (CheckResult r : controller.listResults(regId))

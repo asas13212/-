@@ -28,6 +28,7 @@ CREATE TABLE checkitem (
     cname  VARCHAR(20) COMMENT '检查名称',
     dw     VARCHAR(20) COMMENT '单位',
     ckfw   VARCHAR(40) COMMENT '参考范围',
+    price  DECIMAL(10,2) COMMENT '单项费用(元);套餐价=所含各项之和',
     status INT         COMMENT '状态:0正常|1下架'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -37,7 +38,7 @@ CREATE TABLE checkgroup (
     gname  VARCHAR(50)   COMMENT '套餐名称',
     bh     VARCHAR(20)   COMMENT '编号',
     remark VARCHAR(200)  COMMENT '备注',
-    price  DECIMAL(10,2) COMMENT '套餐价(元);收费按此入账',
+    price  DECIMAL(10,2) COMMENT '历史列:套餐价(元);现由所含检查项单价之和动态得出,代码不再读写',
     status INT           COMMENT '状态:0正常|1停用'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -78,12 +79,12 @@ CREATE TABLE check_result (
     FOREIGN KEY (cid) REFERENCES checkitem(cid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 7. 收费表（一条预约对应一条收费记录；收费按套餐 price 入账）
+-- 7. 收费表（一条预约对应一条收费记录；套餐预约按所含检查项单价之和、单项预约按该检查项单价入账）
 CREATE TABLE fee (
     id       INT            AUTO_INCREMENT PRIMARY KEY COMMENT '主键id',
     reg_id   INT            COMMENT '预约id',
     tel      VARCHAR(11)    COMMENT '患者账号',
-    gid      VARCHAR(50)    COMMENT '套餐id',
+    gid      VARCHAR(50)    COMMENT '套餐id(单项预约时为空,项目归属查 registration)',
     amount   DECIMAL(10,2)  COMMENT '收费金额(元)',
     status   INT            COMMENT '状态:0待缴|1已缴|2已退款',
     pay_time DATETIME       COMMENT '缴费时间',

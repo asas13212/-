@@ -12,6 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -22,7 +23,7 @@ public class CheckGroupPanel extends JPanel
     private final AdminController controller = new AdminController();
     private final DefaultTableModel tableModel;
     private final JTable table;
-    private final String[] columns = {"主键id", "名称", "编号", "备注", "状态"};
+    private final String[] columns = {"主键id", "名称", "编号", "套餐价(合计)(元)", "备注", "状态"};
 
     public CheckGroupPanel()
     {
@@ -60,7 +61,7 @@ public class CheckGroupPanel extends JPanel
         for (CheckGroup g : controller.listGroups())
         {
             tableModel.addRow(new Object[]{g.getGid(), g.getGname(), g.getBh(),
-                    g.getRemark(), g.getStatus() == 0 ? "正常" : "停用"});
+                    priceText(g.getPrice()), g.getRemark(), g.getStatus() == 0 ? "正常" : "停用"});
         }
     }
 
@@ -158,11 +159,22 @@ public class CheckGroupPanel extends JPanel
             JOptionPane.showMessageDialog(this, "该套餐还没有检查项");
             return;
         }
-        StringBuilder sb = new StringBuilder("套餐 " + gid + " 包含的检查项：\n");
+        BigDecimal total = BigDecimal.ZERO;
+        StringBuilder sb = new StringBuilder("套餐 " + gid + " 包含的检查项（套餐价=各单项之和）：\n");
         for (CheckItem c : items)
         {
-            sb.append(c.getCid()).append(" ").append(c.getCname()).append("\n");
+            BigDecimal p = c.getPrice();
+            total = total.add(p == null ? BigDecimal.ZERO : p);
+            sb.append("  ").append(c.getCname()).append("（").append(c.getCid())
+              .append("）单价 ").append(priceText(p)).append(" 元\n");
         }
+        sb.append("套餐合计：").append(priceText(total)).append(" 元");
         JOptionPane.showMessageDialog(this, sb.toString());
+    }
+
+    /** 金额展示：未定价显示占位 */
+    private String priceText(BigDecimal p)
+    {
+        return p == null ? "未定价" : p.toPlainString();
     }
 }

@@ -12,9 +12,18 @@ import java.util.List;
 
 /**
  * 检查组表数据访问类
+ * 注意:checkgroup.price 列已退役;套餐价一律由所含检查项单价求和得出(别名 price),代码不再读库存套餐价
  */
 public class CheckGroupDao
 {
+    /** 套餐列表查询列:显式列 + 求所含各项单价之和,结果别名为 price */
+    private static final String SELECT_COLS =
+            "SELECT g.gid, g.gname, g.bh, g.remark, g.status, "
+          + "       (SELECT IFNULL(SUM(ci.price), 0) FROM checkgroup_item gi "
+          + "          JOIN checkitem ci ON ci.cid = gi.cid "
+          + "         WHERE gi.gid = g.gid) AS price "
+          + "  FROM checkgroup g ";
+
     /** 新增检查组 */
     public boolean insert(CheckGroup g)
     {
@@ -43,10 +52,10 @@ public class CheckGroupDao
         return false;
     }
 
-    /** 查询所有检查组 */
+    /** 查询所有检查组(套餐价=所含各项单价之和) */
     public List<CheckGroup> findAll()
     {
-        String sql = "SELECT * FROM checkgroup";
+        String sql = SELECT_COLS;
         List<CheckGroup> list = new ArrayList<>();
         Connection conn = null;
         PreparedStatement ps = null;
@@ -72,10 +81,10 @@ public class CheckGroupDao
         return list;
     }
 
-    /** 按名称模糊搜索 */
+    /** 按名称模糊搜索(套餐价=所含各项单价之和) */
     public List<CheckGroup> findByName(String name)
     {
-        String sql = "SELECT * FROM checkgroup WHERE gname LIKE ?";
+        String sql = SELECT_COLS + "WHERE g.gname LIKE ?";
         List<CheckGroup> list = new ArrayList<>();
         Connection conn = null;
         PreparedStatement ps = null;

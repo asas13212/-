@@ -109,13 +109,15 @@ public class AdminDao
         return list;
     }
 
-    /** 查询所有预约，带患者姓名和套餐名称 */
+    /** 查询所有预约，带患者姓名和项目名称（套餐=套餐名；单项预约=该检查项名，LEFT JOIN 保证 gid 空的单项也在） */
     public List<RegistrationVO> findAllRegistration()
     {
-        String sql = "SELECT r.id, r.tel, u.name AS patient_name, r.gid, g.gname AS group_name, r.reg_time, r.status " +
+        String sql = "SELECT r.id, r.tel, u.name AS patient_name, r.gid, r.cid, " +
+                "COALESCE(g.gname, ci.cname) AS group_name, r.reg_time, r.status " +
                 "FROM registration r " +
                 "JOIN users u ON u.tel = r.tel " +
-                "JOIN checkgroup g ON g.gid = r.gid " +
+                "LEFT JOIN checkgroup g ON g.gid = r.gid " +
+                "LEFT JOIN checkitem ci ON ci.cid = r.cid " +
                 "ORDER BY r.reg_time DESC";
         List<RegistrationVO> list = new ArrayList<>();
         Connection conn = null;
@@ -142,13 +144,15 @@ public class AdminDao
         return list;
     }
 
-    /** 查询所有「待录入」预约（status=0 已预约），带患者姓名和套餐名称，供结果录入下拉选择 */
+    /** 查询所有「待录入」预约（status=0 已预约），带患者姓名和项目名称，供结果录入下拉选择（含单项预约） */
     public List<RegistrationVO> findPendingRegistration()
     {
-        String sql = "SELECT r.id, r.tel, u.name AS patient_name, r.gid, g.gname AS group_name, r.reg_time, r.status " +
+        String sql = "SELECT r.id, r.tel, u.name AS patient_name, r.gid, r.cid, " +
+                "COALESCE(g.gname, ci.cname) AS group_name, r.reg_time, r.status " +
                 "FROM registration r " +
                 "JOIN users u ON u.tel = r.tel " +
-                "JOIN checkgroup g ON g.gid = r.gid " +
+                "LEFT JOIN checkgroup g ON g.gid = r.gid " +
+                "LEFT JOIN checkitem ci ON ci.cid = r.cid " +
                 "WHERE r.status = 0 ORDER BY r.reg_time ASC";
         List<RegistrationVO> list = new ArrayList<>();
         Connection conn = null;
@@ -175,18 +179,21 @@ public class AdminDao
         return list;
     }
 
-    /** 查询某时间范围内的预约，带患者姓名、套餐名、检查项目名（顿号分隔），供日历按天展示 */
+    /** 查询某时间范围内的预约，带患者姓名、项目名、检查项目名（顿号分隔），供日历按天展示（含单项预约） */
     public List<CalendarAppointment> findAppointmentsByRange(Date from, Date to)
     {
-        String sql = "SELECT r.id, r.tel, u.name AS patient_name, g.gname AS group_name, r.reg_time, r.status, " +
-                "GROUP_CONCAT(ci.cname ORDER BY ci.bh SEPARATOR '、') AS items " +
+        String sql = "SELECT r.id, r.tel, u.name AS patient_name, " +
+                "COALESCE(g.gname, ci.cname) AS group_name, r.reg_time, r.status, " +
+                // 套餐→所含检查项名顿号拼接；单项预约(gid 空)→该项自身名称
+                "CASE WHEN r.gid IS NOT NULL " +
+                "     THEN (SELECT GROUP_CONCAT(x.cname ORDER BY x.bh SEPARATOR '、') FROM checkgroup_item gi " +
+                "             JOIN checkitem x ON x.cid = gi.cid WHERE gi.gid = r.gid) " +
+                "     ELSE ci.cname END AS items " +
                 "FROM registration r " +
                 "JOIN users u ON u.tel = r.tel " +
-                "JOIN checkgroup g ON g.gid = r.gid " +
-                "LEFT JOIN checkgroup_item gi ON gi.gid = r.gid " +
-                "LEFT JOIN checkitem ci ON ci.cid = gi.cid " +
+                "LEFT JOIN checkgroup g ON g.gid = r.gid " +
+                "LEFT JOIN checkitem ci ON ci.cid = r.cid " +
                 "WHERE r.reg_time >= ? AND r.reg_time < ? " +
-                "GROUP BY r.id, r.tel, u.name, g.gname, r.reg_time, r.status " +
                 "ORDER BY r.reg_time ASC";
         List<CalendarAppointment> list = new ArrayList<>();
         Connection conn = null;
@@ -302,6 +309,7 @@ public class AdminDao
         c.setCname(rs.getString("cname"));
         c.setDw(rs.getString("dw"));
         c.setCkfw(rs.getString("ckfw"));
+        c.setPrice(rs.getBigDecimal("price"));
         c.setStatus(rs.getInt("status"));
         return c;
     }
@@ -323,6 +331,7 @@ public class AdminDao
         r.setId(rs.getInt("id"));
         r.setTel(rs.getString("tel"));
         r.setGid(rs.getString("gid"));
+        r.setCid(rs.getString("cid"));
         r.setRegTime(rs.getTimestamp("reg_time"));
         r.setStatus(rs.getInt("status"));
         return r;
@@ -348,6 +357,7 @@ public class AdminDao
         vo.setTel(rs.getString("tel"));
         vo.setPatientName(rs.getString("patient_name"));
         vo.setGid(rs.getString("gid"));
+        vo.setCid(rs.getString("cid"));
         vo.setGroupName(rs.getString("group_name"));
         vo.setRegTime(rs.getTimestamp("reg_time"));
         vo.setStatus(rs.getInt("status"));

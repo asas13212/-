@@ -160,6 +160,7 @@ public class RegistrationDao
         r.setId(rs.getInt("id"));
         r.setTel(rs.getString("tel"));
         r.setGid(rs.getString("gid"));
+        r.setCid(rs.getString("cid"));
         r.setRegTime(rs.getTimestamp("reg_time"));
         r.setStatus(rs.getInt("status"));
         return r;

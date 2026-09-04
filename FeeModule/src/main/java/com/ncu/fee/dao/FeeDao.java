@@ -23,15 +23,22 @@ public class FeeDao
 {
     /**
      * 查还没有收费记录的预约（status=0 已预约 且 fee 表中无该预约），供"收费登记"用。
-     * 金额按套餐价入账：JOIN checkgroup 时把 g.price 一并查出，由收费界面直接入账。
+     * 支持套餐预约与单项预约：套餐 gid 非空、单项 gid 空 cid 非空。
+     * 应收金额当场算出：套餐=所含各项单价之和(SUM 子查询)，单项=该检查项单价(ci.price)；
+     * group_name = 套餐名或检查项名(COALESCE)。
      */
     public List<FeeRegVO> findUnchargedRegs()
     {
-        String sql = "SELECT r.id, r.tel, u.name AS patient_name, r.gid, g.gname AS group_name, " +
-                "g.price AS price, r.reg_time " +
+        String sql = "SELECT r.id, r.tel, u.name AS patient_name, r.gid, r.cid, " +
+                "COALESCE(g.gname, ci.cname) AS group_name, " +
+                // 套餐(gid 非空)→子查询 SUM；单项(gid 空)→子查询无匹配为 NULL，COALESCE 落到 ci.price。勿包 IFNULL 否则单项目归 0
+                "COALESCE((SELECT SUM(x.price) FROM checkgroup_item gi " +
+                "            JOIN checkitem x ON x.cid = gi.cid WHERE gi.gid = r.gid), " +
+                "          ci.price) AS price, r.reg_time " +
                 "FROM registration r " +
                 "JOIN users u ON u.tel = r.tel " +
-                "JOIN checkgroup g ON g.gid = r.gid " +
+                "LEFT JOIN checkgroup g ON g.gid = r.gid " +
+                "LEFT JOIN checkitem ci ON ci.cid = r.cid " +
                 "LEFT JOIN fee f ON f.reg_id = r.id " +
                 "WHERE r.status = 0 AND f.id IS NULL " +
                 "ORDER BY r.reg_time DESC";
@@ -51,6 +58,7 @@ public class FeeDao
                 vo.setTel(rs.getString("tel"));
                 vo.setPatientName(rs.getString("patient_name"));
                 vo.setGid(rs.getString("gid"));
+                vo.setCid(rs.getString("cid"));
                 vo.setGroupName(rs.getString("group_name"));
                 vo.setPrice(rs.getBigDecimal("price"));
                 vo.setRegTime(rs.getTimestamp("reg_time"));
@@ -68,14 +76,17 @@ public class FeeDao
         return list;
     }
 
-    /** 查询所有收费记录（带患者姓名、套餐名称） */
+    /** 查询所有收费记录（带患者姓名、项目名称；单项收费记录名经 registration→checkitem 带出） */
     public List<FeeVO> findAllFees()
     {
-        String sql = "SELECT f.id, f.reg_id, f.tel, u.name AS patient_name, f.gid, g.gname AS group_name, " +
+        String sql = "SELECT f.id, f.reg_id, f.tel, u.name AS patient_name, f.gid, r.cid AS cid, " +
+                "COALESCE(g.gname, ci.cname) AS group_name, " +
                 "f.amount, f.status, f.operator, f.pay_time, f.remark " +
                 "FROM fee f " +
                 "JOIN users u ON u.tel = f.tel " +
-                "JOIN checkgroup g ON g.gid = f.gid " +
+                "LEFT JOIN checkgroup g ON g.gid = f.gid " +
+                "LEFT JOIN registration r ON r.id = f.reg_id " +
+                "LEFT JOIN checkitem ci ON ci.cid = r.cid " +
                 "ORDER BY f.pay_time DESC, f.id DESC";
         List<FeeVO> list = new ArrayList<>();
         Connection conn = null;
@@ -94,6 +105,7 @@ public class FeeDao
                 vo.setTel(rs.getString("tel"));
                 vo.setPatientName(rs.getString("patient_name"));
                 vo.setGid(rs.getString("gid"));
+                vo.setCid(rs.getString("cid"));
                 vo.setGroupName(rs.getString("group_name"));
                 vo.setAmount(rs.getBigDecimal("amount"));
                 vo.setStatus(rs.getInt("status"));

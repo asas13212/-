@@ -68,7 +68,7 @@ public class CalendarPanel extends JPanel
     private final JLabel dayTitle = new JLabel();
     private final DefaultTableModel detailModel;
     private final JTable detailTable;
-    private final String[] columns = {"时间", "患者", "套餐", "检查项目", "状态"};
+    private final String[] columns = {"时间", "患者", "项目名称", "检查项目", "状态"};
 
     private final Calendar cursor = Calendar.getInstance(); // 当前显示月份（固定到 1 号）
     private DayCell[] cells = new DayCell[42];              // 月历 6x7 个格

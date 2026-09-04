@@ -11,6 +11,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.math.BigDecimal;
 
 /**
  * 检查项管理面板
@@ -20,7 +21,7 @@ public class CheckItemPanel extends JPanel
     private final AdminController controller = new AdminController();
     private final DefaultTableModel tableModel;
     private final JTable table;
-    private final String[] columns = {"主键id", "编号", "名称", "单位", "参考范围", "状态"};
+    private final String[] columns = {"主键id", "编号", "名称", "单位", "参考范围", "单价(元)", "状态"};
 
     public CheckItemPanel()
     {
@@ -57,7 +58,7 @@ public class CheckItemPanel extends JPanel
         for (CheckItem c : controller.listItems())
         {
             tableModel.addRow(new Object[]{c.getCid(), c.getBh(), c.getCname(),
-                    c.getDw(), c.getCkfw(), c.getStatus() == 0 ? "正常" : "下架"});
+                    c.getDw(), c.getCkfw(), priceText(c.getPrice()), c.getStatus() == 0 ? "正常" : "下架"});
         }
     }
 
@@ -75,14 +76,17 @@ public class CheckItemPanel extends JPanel
     private void addItem()
     {
         String[] vals = DialogUtil.prompt(this, "新增检查项",
-                new String[]{"主键id", "编号", "名称", "单位", "参考范围"}, null);
+                new String[]{"主键id", "编号", "名称", "单位", "参考范围", "单价(元)"}, null);
         if (vals == null) return;
+        BigDecimal price = parsePrice(vals[5]);
+        if (price == null) return;
         CheckItem c = new CheckItem();
         c.setCid(vals[0]);
         c.setBh(vals[1]);
         c.setCname(vals[2]);
         c.setDw(vals[3]);
         c.setCkfw(vals[4]);
+        c.setPrice(price);
         c.setStatus(0);
         if (controller.addItem(c))
         {
@@ -101,13 +105,17 @@ public class CheckItemPanel extends JPanel
         CheckItem c = controller.findItem(cid);
         if (c == null) return;
         String[] vals = DialogUtil.prompt(this, "修改检查项",
-                new String[]{"编号", "名称", "单位", "参考范围"},
-                new String[]{c.getBh(), c.getCname(), c.getDw(), c.getCkfw()});
+                new String[]{"编号", "名称", "单位", "参考范围", "单价(元)"},
+                new String[]{c.getBh(), c.getCname(), c.getDw(), c.getCkfw(),
+                        c.getPrice() == null ? "" : c.getPrice().toPlainString()});
         if (vals == null) return;
+        BigDecimal price = parsePrice(vals[4]);
+        if (price == null) return;
         c.setBh(vals[0]);
         c.setCname(vals[1]);
         c.setDw(vals[2]);
         c.setCkfw(vals[3]);
+        c.setPrice(price);
         if (controller.editItem(c))
         {
             refresh();
@@ -115,6 +123,37 @@ public class CheckItemPanel extends JPanel
         else
         {
             JOptionPane.showMessageDialog(this, "修改失败");
+        }
+    }
+
+    /** 单价列展示：未定价显示占位 */
+    private String priceText(BigDecimal p)
+    {
+        return p == null ? "未定价" : p.toPlainString();
+    }
+
+    /** 解析并校验单价：必须为正数；非法返回 null（已弹提示） */
+    private BigDecimal parsePrice(String s)
+    {
+        if (s == null || s.trim().isEmpty())
+        {
+            JOptionPane.showMessageDialog(this, "请填写单价(元)");
+            return null;
+        }
+        try
+        {
+            BigDecimal p = new BigDecimal(s.trim());
+            if (p.compareTo(BigDecimal.ZERO) <= 0)
+            {
+                JOptionPane.showMessageDialog(this, "单价必须大于 0");
+                return null;
+            }
+            return p;
+        }
+        catch (NumberFormatException e)
+        {
+            JOptionPane.showMessageDialog(this, "单价必须是数字（如 100 或 100.50）");
+            return null;
         }
     }
 

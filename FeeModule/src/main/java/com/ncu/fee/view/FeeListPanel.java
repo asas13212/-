@@ -24,7 +24,7 @@ public class FeeListPanel extends JPanel
     private final FeeController controller = new FeeController();
     private final DefaultTableModel tableModel;
     private final JTable table;
-    private final String[] columns = {"收费id", "预约id", "患者", "套餐", "金额(元)", "状态", "收费员", "缴费时间", "备注"};
+    private final String[] columns = {"收费id", "预约id", "患者", "项目名称", "金额(元)", "状态", "收费员", "缴费时间", "备注"};
 
     public FeeListPanel()
     {

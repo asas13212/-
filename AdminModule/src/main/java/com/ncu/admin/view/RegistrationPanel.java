@@ -20,7 +20,7 @@ public class RegistrationPanel extends JPanel
     private final AdminController controller = new AdminController();
     private final DefaultTableModel tableModel;
     private final JTable table;
-    private final String[] columns = {"预约id", "患者账号", "患者姓名", "套餐id", "套餐名", "预约时间", "状态"};
+    private final String[] columns = {"预约id", "患者账号", "患者姓名", "类型", "项目id", "项目名称", "预约时间", "状态"};
 
     public RegistrationPanel()
     {
@@ -54,7 +54,9 @@ public class RegistrationPanel extends JPanel
         for (RegistrationVO r : controller.listRegistrations())
         {
             tableModel.addRow(new Object[]{r.getId(), r.getTel(), r.getPatientName(),
-                    r.getGid(), r.getGroupName(), r.getRegTime(), statusText(r.getStatus())});
+                    r.getGid() != null ? "套餐" : "单项",
+                    r.getGid() != null ? r.getGid() : r.getCid(),
+                    r.getGroupName(), r.getRegTime(), statusText(r.getStatus())});
         }
     }
 

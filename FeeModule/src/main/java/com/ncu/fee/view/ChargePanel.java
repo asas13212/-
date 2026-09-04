@@ -16,8 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 收费登记面板：列出还没有收费记录的"已预约"，选中后按套餐价入账（只弹确认，不手输金额）。
- * 金额 = 该预约套餐在 checkgroup.price 上的套餐价，由 FeeDao 联表带出。
+ * 收费登记面板：列出还没有收费记录的"已预约"，选中后按应收金额入账（只弹确认，不手输金额）。
+ * 支持套餐预约与单项预约：金额 = 套餐所含各项单价之和 / 单项检查项单价，由 FeeDao 联表当场算出。
  */
 public class ChargePanel extends JPanel
 {
@@ -25,7 +25,7 @@ public class ChargePanel extends JPanel
     private final DefaultTableModel tableModel;
     private final JTable table;
     private final String operatorTel; // 当前收费员(医生)账号
-    private final String[] columns = {"预约id", "患者账号", "患者姓名", "套餐id", "套餐名称", "套餐价(元)", "预约时间"};
+    private final String[] columns = {"预约id", "患者账号", "患者姓名", "类型", "项目id", "项目名称", "金额(元)", "预约时间"};
 
     private List<FeeRegVO> uncharged = new ArrayList<>(); // 与表格行一一对应
 
@@ -63,14 +63,17 @@ public class ChargePanel extends JPanel
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         for (FeeRegVO v : uncharged)
         {
+            boolean isPackage = v.getGid() != null;
             tableModel.addRow(new Object[]{v.getId(), v.getTel(), v.getPatientName(),
-                    v.getGid(), v.getGroupName(),
+                    isPackage ? "套餐" : "单项",
+                    isPackage ? v.getGid() : v.getCid(),
+                    v.getGroupName(),
                     v.getPrice() == null ? "-" : v.getPrice().toPlainString(),
                     v.getRegTime() == null ? "" : sdf.format(v.getRegTime())});
         }
     }
 
-    /** 按套餐价入账：金额取该行套餐的 price，确认后直接生成一条已缴收费记录 */
+    /** 按应收金额入账：金额取该行的套餐合计或单项单价，确认后直接生成一条已缴收费记录 */
     private void charge()
     {
         int row = table.getSelectedRow();
@@ -82,19 +85,22 @@ public class ChargePanel extends JPanel
         FeeRegVO v = uncharged.get(row);
         if (v.getPrice() == null || v.getPrice().signum() <= 0)
         {
-            JOptionPane.showMessageDialog(this, "该套餐还没有设置价格，无法按套餐价收费\n请先在数据中给套餐补上 price");
+            JOptionPane.showMessageDialog(this, "该项目还没有定价，无法收费\n请在医生端【检查项管理】给检查项设置单价后刷新");
             refresh();
             return;
         }
+        boolean isPackage = v.getGid() != null;
+        String typeName = isPackage ? "套餐" : "单项检查";
         int ok = JOptionPane.showConfirmDialog(this,
-                "对预约 #" + v.getId() + " 收取【" + v.getGroupName() + "】费用：\n\n"
-                        + "        套餐价 ￥" + v.getPrice().toPlainString() + "\n\n确认入账吗？",
+                "对预约 #" + v.getId() + " 收取【" + v.getGroupName() + "】费用（" + typeName + "）：\n\n"
+                        + "        应收 ￥" + v.getPrice().toPlainString() + "\n\n确认入账吗？",
                 "确认收费", JOptionPane.OK_CANCEL_OPTION);
         if (ok != JOptionPane.OK_OPTION)
         {
             return;
         }
-        String err = controller.charge(v.getId(), v.getTel(), v.getGid(), v.getPrice(), operatorTel);
+        String err = controller.charge(v.getId(), v.getTel(), isPackage ? v.getGid() : null,
+                v.getPrice(), operatorTel);
         if (err == null)
         {
             JOptionPane.showMessageDialog(this, "收费成功：" + v.getGroupName() + " ￥" + v.getPrice().toPlainString());

@@ -7,17 +7,19 @@ import java.util.Date;
  * 待收费预约 VO：一条还没收费记录的预约（已预约状态、且 fee 里没有对应行）
  * 字段与展示列一一对应，避免界面直接依赖多个实体
  * <p>
- * price = 该预约套餐(checkgroup.price)的套餐价。收费登记按套餐价直接入账，
- * 由 FeeModule 联表查出并写回收费记录，界面不手输金额。
+ * 预约可能是套餐预约（gid 非空）或单项预约（gid 空、cid 非空）。
+ * price = 应收金额：套餐预约=所含各项单价之和；单项预约=该检查项单价。界面按此金额直接入账，不手输。
+ * groupName = 项目名称（套餐名或检查项名），由联表查询 COALESCE 得出。
  */
 public class FeeRegVO
 {
     private int id;             // 预约id
     private String tel;         // 患者账号
     private String patientName; // 患者姓名
-    private String gid;         // 套餐id
-    private String groupName;   // 套餐名称
-    private BigDecimal price;   // 套餐价(元)
+    private String gid;         // 套餐id(单项预约时为空)
+    private String cid;         // 检查项id(单项预约时用;套餐预约时为空)
+    private String groupName;   // 项目名称:套餐名或检查项名
+    private BigDecimal price;   // 应收金额(元)
     private Date regTime;       // 预约时间
 
     public int getId()
@@ -58,6 +60,16 @@ public class FeeRegVO
     public void setGid(String gid)
     {
         this.gid = gid;
+    }
+
+    public String getCid()
+    {
+        return cid;
+    }
+
+    public void setCid(String cid)
+    {
+        this.cid = cid;
     }
 
     public String getGroupName()

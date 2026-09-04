@@ -4,7 +4,8 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * 收费记录 VO：fee 表 + 患者姓名 + 套餐名称（联表查询结果）
+ * 收费记录 VO：fee 表 + 患者姓名 + 项目名称（联表查询结果）
+ * 单项收费记录（gid 为空）的项目名称与 cid 经 registration 反查 checkitem 带出。
  */
 public class FeeVO
 {
@@ -12,8 +13,9 @@ public class FeeVO
     private int regId;         // 预约id
     private String tel;        // 患者账号
     private String patientName;// 患者姓名
-    private String gid;        // 套餐id
-    private String groupName;  // 套餐名称
+    private String gid;        // 套餐id(单项收费记录时为空)
+    private String cid;        // 检查项id(单项收费记录时用;由 registration 带出)
+    private String groupName;  // 项目名称:套餐名或检查项名
     private BigDecimal amount; // 收费金额(元)
     private int status;        // 状态:0待缴|1已缴|2已退款
     private String operator;   // 收费员(医生)账号
@@ -68,6 +70,16 @@ public class FeeVO
     public void setGid(String gid)
     {
         this.gid = gid;
+    }
+
+    public String getCid()
+    {
+        return cid;
+    }
+
+    public void setCid(String cid)
+    {
+        this.cid = cid;
     }
 
     public String getGroupName()

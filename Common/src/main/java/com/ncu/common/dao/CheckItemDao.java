@@ -3,6 +3,7 @@ package com.ncu.common.dao;
 import com.ncu.common.model.CheckItem;
 import com.ncu.common.util.JdbcUtil;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,7 +19,7 @@ public class CheckItemDao
     /** 新增检查项 */
     public boolean insert(CheckItem c)
     {
-        String sql = "INSERT INTO checkitem(cid, bh, cname, dw, ckfw, status) VALUES(?,?,?,?,?,?)";
+        String sql = "INSERT INTO checkitem(cid, bh, cname, dw, ckfw, price, status) VALUES(?,?,?,?,?,?,?)";
         Connection conn = null;
         PreparedStatement ps = null;
         try
@@ -30,7 +31,8 @@ public class CheckItemDao
             ps.setString(3, c.getCname());
             ps.setString(4, c.getDw());
             ps.setString(5, c.getCkfw());
-            ps.setInt(6, c.getStatus());
+            ps.setBigDecimal(6, c.getPrice());
+            ps.setInt(7, c.getStatus());
             return ps.executeUpdate() > 0;
         }
         catch (SQLException e)
@@ -164,7 +166,7 @@ public class CheckItemDao
     /** 修改检查项 */
     public boolean update(CheckItem c)
     {
-        String sql = "UPDATE checkitem SET bh=?, cname=?, dw=?, ckfw=?, status=? WHERE cid=?";
+        String sql = "UPDATE checkitem SET bh=?, cname=?, dw=?, ckfw=?, price=?, status=? WHERE cid=?";
         Connection conn = null;
         PreparedStatement ps = null;
         try
@@ -175,8 +177,9 @@ public class CheckItemDao
             ps.setString(2, c.getCname());
             ps.setString(3, c.getDw());
             ps.setString(4, c.getCkfw());
-            ps.setInt(5, c.getStatus());
-            ps.setString(6, c.getCid());
+            ps.setBigDecimal(5, c.getPrice());
+            ps.setInt(6, c.getStatus());
+            ps.setString(7, c.getCid());
             return ps.executeUpdate() > 0;
         }
         catch (SQLException e)
@@ -223,6 +226,7 @@ public class CheckItemDao
         c.setCname(rs.getString("cname"));
         c.setDw(rs.getString("dw"));
         c.setCkfw(rs.getString("ckfw"));
+        c.setPrice(rs.getBigDecimal("price"));
         c.setStatus(rs.getInt("status"));
         return c;
     }

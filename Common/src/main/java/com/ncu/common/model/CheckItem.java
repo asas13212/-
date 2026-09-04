@@ -1,5 +1,7 @@
 package com.ncu.common.model;
 
+import java.math.BigDecimal;
+
 /**
  * 检查项实体类，对应 checkitem 表
  */
@@ -10,6 +12,7 @@ public class CheckItem
     private String cname;    // 检查名称
     private String dw;       // 单位
     private String ckfw;     // 参考范围
+    private BigDecimal price; // 单项费用(元);null=未定价,套餐价=所含各项之和
     private int status;      // 状态:0正常|1下架
 
     public String getCid()
@@ -60,6 +63,16 @@ public class CheckItem
     public void setCkfw(String ckfw)
     {
         this.ckfw = ckfw;
+    }
+
+    public BigDecimal getPrice()
+    {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price)
+    {
+        this.price = price;
     }
 
     public int getStatus()

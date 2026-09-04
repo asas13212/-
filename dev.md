@@ -3,7 +3,7 @@
 > 给全队看的工程说明：**先读这一份**。
 > 目标：让每个人知道「项目在做什么」「模块怎么分工」「核心概念（role/表/业务链路）」「系统怎么跑起来、登录怎么进、各角色主界面怎么接」。
 
-> ⚠️ **拉取最新代码后，第一件事：整库重建数据库**（角色已收敛、收费已并入后台，旧库结构已过时）
+> ⚠️ **拉取最新代码后，第一件事：整库重建数据库**（角色已收敛、收费已并入后台、**费用模型已改版：单价归 checkitem、套餐价=各项之和、单项预约可计费**，旧库结构已过时）
 > 1) `DROP DATABASE IF EXISTS healthysystem;`
 > 2) 整体执行根目录 `schema.sql`（重建库 + 7 张表，含 `fee`）
 > 3) 整体执行根目录 `data.sql`（3 个登录账号等演示数据，**注意 UTF-8**）
@@ -52,20 +52,20 @@ healthysystem（父 pom）
 | `checkitem` | `CheckItem` | 单个检查项（空腹血糖等） |
 | `checkgroup` | `CheckGroup` | 套餐（多个检查项组成） |
 | `checkgroup_item` | `CheckGroupItem` | 套餐-检查项关联 |
-| `registration` | `Registration` | 患者对套餐的预约（0已约/1已完成/2已取消） |
+| `registration` | `Registration` | 患者预约：套餐预约存 `gid`、**单项预约**存 `cid`（0已约/1已完成/2已取消） |
 | `check_result` | `CheckResult` | 一次预约里各项的结果值（报告数据源） |
-| `fee` | `Fee` | 收费(队长新增)：一条预约一次收费 |
+| `fee` | `Fee` | 收费：一条预约一次收费；套餐预约与单项预约都支持（单项的 gid 为空，项目归属查 registration） |
 
 **业务链路**：医生先维护检查项/套餐 → 患者预约（写 `registration`）→ 医生对预约逐项录结果（写 `check_result`）→ 预约标记完成 → ReportModule 汇总出报告 → 患者查看。
 
 **各表字段**（SQL/界面照这个写，建表以根目录 `schema.sql` 为准）：
 - **users**：`tel`(主键,账号) `pwd` `name` `idcard` `birthday` `sex` `role`
-- **checkitem**：`cid`(主键) `bh`(编号) `cname` `dw`(单位) `ckfw`(参考范围) `status`(0正常|1下架)
-- **checkgroup**：`gid`(主键) `gname` `bh` `remark` `price`(套餐价,元；收费按此入账) `status`(0正常|1停用)
+- **checkitem**：`cid`(主键) `bh`(编号) `cname` `dw`(单位) `ckfw`(参考范围) `price`(单项费用,元；医生在「检查项管理」新增/修改时维护，null=未定价) `status`(0正常|1下架)
+- **checkgroup**：`gid`(主键) `gname` `bh` `remark` `status`(0正常|1停用)。**`price` 列为历史遗留，代码不再读写**；套餐价=所含各检查项单价之和，读取点用 `SUM(checkitem.price)` 子查询现算（别名 `price`），改单价/改套餐内容后合计自动一致
 - **checkgroup_item**：`id`(自增) `gid`→checkgroup `cid`→checkitem
-- **registration**：`id`(自增) `tel`→users `gid`→checkgroup `reg_time` `status`
+- **registration**：`id`(自增) `tel`→users `gid`→checkgroup(单项预约时为空) `cid`→checkitem(单项预约时用) `reg_time` `location`(体检地点) `status`
 - **check_result**：`id`(自增) `reg_id`→registration `tel`→users `cid`→checkitem `result_value` `doctor_tel` `check_time`
-- **fee**：`id`(自增) `reg_id`→registration `tel`→users `gid`→checkgroup `amount`(金额,元) `status`(0待缴|1已缴|2已退款) `pay_time` `operator`(收费员账号) `remark`
+- **fee**：`id`(自增) `reg_id`→registration `tel`→users `gid`→checkgroup(单项收费时为空,项目归属反查 registration→cid) `amount`(金额,元；入账时快照) `status`(0待缴|1已缴|2已退款) `pay_time` `operator`(收费员账号) `remark`
 
 ---
 
@@ -75,7 +75,7 @@ healthysystem（父 pom）
 |:---|:---|:---|
 | **Common** | ✅ 完成 | 6 实体、6 DAO、`JdbcUtil`。需要读写先查 §5，别重复造轮子。 |
 | **MainModule** | ✅ 登录入口已通 | 唯一登录窗（账号+密码，账号即注册手机号，背景图在 `MainModule/src/main/resources/login_background.png`，源图在 `Sources/login-bg-source.png`）。登录成功按 role 打开对应主窗：role0→`PatientHomeFrame`；role1 医生（含原管理员职责）→ `AdminFrame` 后台窗。**各角色模块不再自己做登录。** |
-| **AdminModule** | 🟡 基本完成 | **医生(role1，含原管理员职责)**：维护检查项/套餐及关联、用户管理、预约状态、给预约录 `check_result`（"结果录入"）、收费登记/记录。role1 医生登录进 `AdminFrame` 后台窗（侧边导航七个页签），不再单独开医生窗。 |
+| **AdminModule** | 🟡 基本完成 | **医生(role1，含原管理员职责)**：维护检查项/套餐及关联、用户管理、预约状态、给预约录 `check_result`（"结果录入"）、收费登记/记录。role1 医生登录进 `AdminFrame` 后台窗（侧边导航七个页签），不再单独开医生窗。**预约管理/预约日历/结果录入对患者「单项预约」（gid 空、cid 非空）同样可见可录**：列表/日历显示检查项名与 cid，结果录入的「要录项目」对单项=该检查项本身。 |
 | **PatientModule** | 🟡 基本完成 | 患者：体检预约（可选日期/整点时间/地点）、我的预约、体检报告、健康趋势（折线图看历次检查项变化）、改资料；主窗 `PatientHomeFrame(tel,name)` 已接 LoginFrame。报告入口在「体检报告」→ 打印报告（打开 `ReportFrame`）。独立运行 `PatientMain`（演示患者 13700137000）。 |
 | **ReportModule** | 🟡 基本完成 | 按预约汇总结果出报告：预览 + 打印（`java.awt.print`）+ 导出 PDF（OpenPDF，中文用 `STSong-Light`）。独立运行 `ReportMain`（演示患者 13700137000）。 |
 | **FeeModule** | ✅ 已完成(队长) | 收费台：对"已预约且尚未收费"的预约收费入账（写 `fee`，状态 1 已缴）、查看收费记录、退款（置 2 已退款）。**收费面板已并入 AdminModule 后台页签**（AdminModule 依赖 FeeModule，`AdminFrame` 增加「收费登记/收费记录」两页签，用登录 tel 作收费员）；另保留独立入口 `com.ncu.fee.FeeMain`。 |
@@ -108,7 +108,7 @@ DAO 都是直连 JDBC 的简单类，`new XxxDao()` 即用：
 
 - **从零建库**：整体执行根目录 `schema.sql`（`CREATE DATABASE IF NOT EXISTS healthysystem` + 全部 7 张表，含 `fee`）。
 - **本地库是旧的（含 role=2 的账号、或缺 fee 表）**：直接**整库重建**（见文首三条），别只补脚本片段——`schema.sql`/`data.sql` 是结构、注释与演示数据的唯一权威。
-- **演示数据**：执行根目录 `data.sql`（3 个登录账号、10 检查项、3 套餐、12 条套餐-项关联、2 预约、1 次结果、1 条收费）。**三个套餐价格**：入职 268 / 常规 588 / 心血管 888（存 `checkgroup.price`），收费登记按套餐价直接入账。**执行 schema.sql/data.sql 必须用 UTF-8**（IDEA 控制台跑，或 `mysql --default-character-set=utf8mb4 < xxx.sql`），否则中文字段变空串，导致姓名/套餐名/检查项名显示空白。
+- **演示数据**：执行根目录 `data.sql`（3 个登录账号、11 检查项各带单价、3 套餐、12 条套餐-项关联、5 条预约[含 1 条单项预约 id=5 心电图]、多组检查结果、1 条收费演示）。检查项单价默认：血糖80/谷丙60/肌酐55/胆固醇65/甘油三酯60/白细胞40/尿潜血30/心电图100/收缩压20/身高体重25/舒张压20；三个套餐 `checkgroup.price` 种子按所含各项之和写成 145/200/325（仅为让该历史列有数，代码已不读它）。**执行 schema.sql/data.sql 必须用 UTF-8**（IDEA 控制台跑，或 `mysql --default-character-set=utf8mb4 < xxx.sql`），否则中文字段变空串，导致姓名/套餐名/检查项名显示空白。
 - **登录账号（账号 = 注册手机号 `users.tel`，登录框标签叫「账号」）**：
   - 医生(role1) `13800138000 / 123456`（王医生）——后台全职责：检查项/套餐/用户/预约/结果录入 + 收费
   - 医生(role1) `13900139000 / 123456`（张医生）
@@ -119,7 +119,7 @@ DAO 都是直连 JDBC 的简单类，`new XxxDao()` 即用：
 
 **fee（收费）说明（队长维护）**：`fee` 实体在 Common、读写 DAO 在 `FeeModule/dao/FeeDao.java`；收费面板已并入医生后台 `AdminFrame`（「收费登记/收费记录」两页签，用登录医生 tel 作收费员），另保留独立入口 `com.ncu.fee.FeeMain`。任何模块想读收费，**先找队长**统一提升到 Common，不要各自另写一份 fee DAO。
 
-> **收费登记 = 按套餐价入账（改版，金额不再手输）**：待收费列表由 `FeeDao.findUnchargedRegs` JOIN `checkgroup` 带出该预约套餐的 `price`，`ChargePanel` 点「确认收费」只弹「套餐价 ￥xxx 确认入账？」→ `FeeController.charge` 直接把套餐价写成 fee.amount。**若某套餐没有 price（如界面新增套餐没配价）**，收费时会提示先补 price。价格字段归属套餐（checkgroup），收费只读不写；谁要新增/改套餐价，改 `data.sql` 或库里的 `checkgroup.price` 即可，患者端/后台套餐管理暂不展示价格。
+> **收费登记 = 按应收金额入账（金额不手输）**：待收费列表 `FeeDao.findUnchargedRegs` 用 LEFT JOIN 同时支持两种预约——套餐预约(gid 非空)金额=所含各项单价之和(SUM 子查询)，单项预约(gid 空)金额=该检查项单价；名称 `COALESCE(套餐名,检查项名)`。`ChargePanel` 点「确认收费」弹「应收 ￥xxx 确认入账」→ `FeeController.charge` 把该金额写成 `fee.amount`（**快照**，之后改单价不影响历史收费，符合审计）。**单项预约也按各自检查项单价逐条收费**（患者一次勾选多项=多条单项预约，医生在收费台逐条确认）。未定价（检查项 `price` 为空）无法收费，提示先在「检查项管理」补单价。**单价与改价都在 `checkitem.price`**：医生在后台「检查项管理」新增/修改时填写；改价后套餐「套餐价(合计)」、收费登记的应收、患者端套餐费用/明细单价/单项预约合计全部实时联动（SUM 现算）。**不要再手改 `checkgroup.price`**——它是历史列，代码不再读写。
 
 ---
 
