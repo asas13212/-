@@ -1,6 +1,7 @@
 package com.ncu.admin.controller;
 
 import com.ncu.admin.dao.AdminDao;
+import com.ncu.admin.model.CalendarAppointment;
 import com.ncu.admin.model.RegistrationVO;
 import com.ncu.common.dao.CheckGroupDao;
 import com.ncu.common.dao.CheckGroupItemDao;
@@ -15,6 +16,7 @@ import com.ncu.common.model.CheckResult;
 import com.ncu.common.model.Registration;
 import com.ncu.common.model.User;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -131,6 +133,12 @@ public class AdminController
     public boolean updateRegStatus(int id, int status)
     {
         return adminDao.updateRegStatus(id, status);
+    }
+
+    // ===== 预约日历 =====
+    public List<CalendarAppointment> listAppointments(Date from, Date to)
+    {
+        return adminDao.findAppointmentsByRange(from, to);
     }
 
     // ===== 检查结果 =====

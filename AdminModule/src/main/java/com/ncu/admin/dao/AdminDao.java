@@ -1,5 +1,6 @@
 package com.ncu.admin.dao;
 
+import com.ncu.admin.model.CalendarAppointment;
 import com.ncu.admin.model.RegistrationVO;
 import com.ncu.common.model.CheckGroup;
 import com.ncu.common.model.CheckItem;
@@ -10,7 +11,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -172,6 +175,46 @@ public class AdminDao
         return list;
     }
 
+    /** 查询某时间范围内的预约，带患者姓名、套餐名、检查项目名（顿号分隔），供日历按天展示 */
+    public List<CalendarAppointment> findAppointmentsByRange(Date from, Date to)
+    {
+        String sql = "SELECT r.id, r.tel, u.name AS patient_name, g.gname AS group_name, r.reg_time, r.status, " +
+                "GROUP_CONCAT(ci.cname ORDER BY ci.bh SEPARATOR '、') AS items " +
+                "FROM registration r " +
+                "JOIN users u ON u.tel = r.tel " +
+                "JOIN checkgroup g ON g.gid = r.gid " +
+                "LEFT JOIN checkgroup_item gi ON gi.gid = r.gid " +
+                "LEFT JOIN checkitem ci ON ci.cid = gi.cid " +
+                "WHERE r.reg_time >= ? AND r.reg_time < ? " +
+                "GROUP BY r.id, r.tel, u.name, g.gname, r.reg_time, r.status " +
+                "ORDER BY r.reg_time ASC";
+        List<CalendarAppointment> list = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try
+        {
+            conn = JdbcUtil.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setTimestamp(1, new Timestamp(from.getTime()));
+            ps.setTimestamp(2, new Timestamp(to.getTime()));
+            rs = ps.executeQuery();
+            while (rs.next())
+            {
+                list.add(mapAppointment(rs));
+            }
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            JdbcUtil.close(conn, ps, rs);
+        }
+        return list;
+    }
+
     /** 按主键查预约 */
     public Registration findRegById(int id)
     {
@@ -283,6 +326,19 @@ public class AdminDao
         r.setRegTime(rs.getTimestamp("reg_time"));
         r.setStatus(rs.getInt("status"));
         return r;
+    }
+
+    private CalendarAppointment mapAppointment(ResultSet rs) throws SQLException
+    {
+        CalendarAppointment a = new CalendarAppointment();
+        a.setId(rs.getInt("id"));
+        a.setTel(rs.getString("tel"));
+        a.setPatientName(rs.getString("patient_name"));
+        a.setGroupName(rs.getString("group_name"));
+        a.setRegTime(rs.getTimestamp("reg_time"));
+        a.setStatus(rs.getInt("status"));
+        a.setItems(rs.getString("items"));
+        return a;
     }
 
     private RegistrationVO mapRegVO(ResultSet rs) throws SQLException
