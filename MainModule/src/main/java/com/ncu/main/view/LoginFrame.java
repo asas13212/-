@@ -1,6 +1,7 @@
 package com.ncu.main.view;
 
 import com.ncu.admin.view.AdminFrame;
+import com.ncu.common.ui.UiTheme;
 import com.ncu.main.controller.MainController;
 import com.ncu.patient.view.PatientHomeFrame;
 import com.ncu.main.model.CurrentUser;
@@ -15,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -31,8 +33,9 @@ import java.net.URL;
  *
  * 整窗铺登录背景图（资源 MainModule/src/main/resources/login_background.png，
  * 设计源图在仓库根 Sources/login-bg-source.png），中间白色半透明卡片只放
- * 手机号 + 密码。登录成功后按 role 打开对应角色模块的主界面。
+ * 账号(注册手机号) + 密码。登录成功后按 role 打开对应角色模块的主界面。
  * 注：原 AccessModule 登录已并入本类，作为整个系统的唯一登录入口。
+ * role 仅两值：0 患者 | 1 医生（原 2 管理员的职责已并入医生，不再有第三种角色）。
  */
 public class LoginFrame extends JFrame
 {
@@ -53,6 +56,7 @@ public class LoginFrame extends JFrame
 
     private void initUI()
     {
+        UiTheme.install(); // 全应用统一外观（幂等）
         setTitle("健康体检管理系统 - 登录");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
@@ -84,7 +88,7 @@ public class LoginFrame extends JFrame
         telField.requestFocusInWindow();
     }
 
-    /** 白色半透明卡片：标题 + 手机号 + 密码 + 两个按钮 */
+    /** 白色半透明卡片：标题 + 账号 + 密码 + 两个按钮 */
     private JPanel buildLoginCard()
     {
         Font yahei = new Font("Microsoft YaHei", Font.PLAIN, 16);
@@ -107,7 +111,7 @@ public class LoginFrame extends JFrame
         c.anchor = GridBagConstraints.CENTER;
         card.add(title, c);
 
-        JLabel telLabel = new JLabel("手机号：");
+        JLabel telLabel = new JLabel("账  号：");
         telLabel.setFont(yahei);
         c.gridy = 1;
         c.gridwidth = 1;
@@ -150,8 +154,25 @@ public class LoginFrame extends JFrame
         c.fill = GridBagConstraints.NONE;
         card.add(btnPanel, c);
 
+        // 底部"注册"链接：患者自助注册（仅 role=0，医生账号不开自助注册）
+        JButton regLink = new JButton("没有账号？注册");
+        regLink.setFont(new Font("Microsoft YaHei", Font.PLAIN, 13));
+        regLink.setForeground(new Color(0x1A6FD9));
+        regLink.setBorderPainted(false);
+        regLink.setContentAreaFilled(false);
+        regLink.setFocusPainted(false);
+        regLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        c.gridx = 0;
+        c.gridy = 4;
+        c.gridwidth = 2;
+        c.anchor = GridBagConstraints.CENTER;
+        c.fill = GridBagConstraints.NONE;
+        c.insets = new Insets(2, 8, 0, 8);
+        card.add(regLink, c);
+
         loginBtn.addActionListener(e -> onLogin());
         resetBtn.addActionListener(e -> reset());
+        regLink.addActionListener(e -> openRegister());
 
         return card;
     }
@@ -163,37 +184,48 @@ public class LoginFrame extends JFrame
         telField.requestFocusInWindow();
     }
 
+    /** 打开患者注册弹窗；注册成功把新账号回填到登录框 */
+    private void openRegister()
+    {
+        RegisterDialog dlg = new RegisterDialog(this, tel -> telField.setText(tel));
+        dlg.setVisible(true);
+    }
+
     private void onLogin()
     {
         String tel = telField.getText().trim();
         String pwd = new String(pwdField.getPassword());
         if (tel.isEmpty() || pwd.isEmpty())
         {
-            JOptionPane.showMessageDialog(this, "手机号和密码不能为空");
+            JOptionPane.showMessageDialog(this, "账号和密码不能为空");
             return;
         }
         CurrentUser u = controller.login(tel, pwd);
         if (u == null)
         {
-            JOptionPane.showMessageDialog(this, "手机号或密码错误");
+            JOptionPane.showMessageDialog(this, "账号或密码错误");
             return;
         }
+        // role：0 患者 | 1 医生（原 2 管理员职责已并入医生，不再有第三种角色）
         switch (u.getRole())
         {
-            case 0:
+            case 0: // 患者 → 患者主窗
                 dispose();
-                new PatientHomeFrame(u.getTel(), u.getName()).setVisible(true);
+                new PatientHomeFrame(u.getTel(), u.getName(), backToLogin()).setVisible(true);
                 break;
-            case 1:
-                JOptionPane.showMessageDialog(this, "【医生端】暂未接入（由其他同学负责开发）。");
-                break;
-            case 2:
+            case 1: // 医生（含原管理员职责）→ 同一后台主窗
                 dispose();
-                new AdminFrame(u.getName()).setVisible(true);
+                new AdminFrame(u.getTel(), u.getName(), "医生", backToLogin()).setVisible(true);
                 break;
             default:
                 JOptionPane.showMessageDialog(this, "未知角色，无法登录。");
         }
+    }
+
+    /** 主窗点「退出登录」后回到本登录窗 */
+    private Runnable backToLogin()
+    {
+        return () -> new LoginFrame().setVisible(true);
     }
 
     /** 背景面板：把背景图拉伸铺满窗口；无图时显示默认浅色 */

@@ -13,7 +13,7 @@ public class User
     private String idcard;   // 身份证
     private Date birthday;   // 出生日期
     private String sex;      // 性别
-    private int role;        // 角色:0患者|1医生|2管理员
+    private int role;        // 角色:0患者|1医生
 
     public String getTel()
     {

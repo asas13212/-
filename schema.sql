@@ -8,7 +8,7 @@
 CREATE DATABASE IF NOT EXISTS healthysystem DEFAULT CHARACTER SET utf8mb4;
 USE healthysystem;
 
--- 1. 用户表（患者/医生/管理员 三合一，用 role 区分）
+-- 1. 用户表（患者/医生，用 role 区分）
 CREATE TABLE users (
     tel      VARCHAR(11) PRIMARY KEY COMMENT '账号(手机号)',
     pwd      VARCHAR(20)  COMMENT '密码',
@@ -16,7 +16,7 @@ CREATE TABLE users (
     idcard   VARCHAR(18)  COMMENT '身份证',
     birthday DATE         COMMENT '出生日期',
     sex      VARCHAR(6)   COMMENT '性别',
-    role     INT          COMMENT '角色:0患者|1医生|2管理员'
+    role     INT          COMMENT '角色:0患者|1医生'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 2. 检查项表
@@ -30,11 +30,13 @@ CREATE TABLE checkitem (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 3. 检查组表（多个检查项组成一个检查组/套餐）
+-- price=套餐价(元)：收费登记(FeeModule)按套餐价自动入账，界面不再手输金额
 CREATE TABLE checkgroup (
     gid    VARCHAR(50) PRIMARY KEY COMMENT '主键id',
     gname  VARCHAR(50) COMMENT '检查组名称',
     bh     VARCHAR(20) COMMENT '编号',
     remark VARCHAR(200) COMMENT '备注',
+    price  DECIMAL(10,2) COMMENT '套餐价(元);收费按此入账',
     status INT         COMMENT '状态:0正常|1停用'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -72,7 +74,7 @@ CREATE TABLE check_result (
     FOREIGN KEY (cid) REFERENCES checkitem(cid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 7. 收费表（一条预约对应一条收费记录；由收费台/管理员对预约收费）
+-- 7. 收费表（一条预约对应一条收费记录；由收费台（医生）对预约收费）
 CREATE TABLE fee (
     id       INT            AUTO_INCREMENT PRIMARY KEY COMMENT '主键id',
     reg_id   INT            COMMENT '预约id',
@@ -81,7 +83,7 @@ CREATE TABLE fee (
     amount   DECIMAL(10,2)  COMMENT '收费金额(元)',
     status   INT            COMMENT '状态:0待缴|1已缴|2已退款',
     pay_time DATETIME       COMMENT '缴费时间',
-    operator VARCHAR(11)    COMMENT '收费员(管理员)账号',
+    operator VARCHAR(11)    COMMENT '收费员(医生)账号',
     remark   VARCHAR(200)   COMMENT '备注',
     FOREIGN KEY (reg_id) REFERENCES registration(id),
     FOREIGN KEY (tel) REFERENCES users(tel),

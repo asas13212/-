@@ -1,16 +1,16 @@
 package com.ncu.patient.view;
 
+import com.ncu.common.ui.Ui;
 import com.ncu.patient.controller.PatientController;
 import com.ncu.patient.model.RegistrationVO;
 
-import javax.swing.JButton;
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
@@ -29,6 +29,8 @@ public class MyRegistrationPanel extends JPanel
     {
         this.tel = tel;
         setLayout(new BorderLayout());
+        Ui.content(this);
+        setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
 
         tableModel = new DefaultTableModel(columns, 0)
         {
@@ -38,22 +40,16 @@ public class MyRegistrationPanel extends JPanel
                 return false;
             }
         };
-        table = new JTable(tableModel);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        table = Ui.table(tableModel);
 
-        JPanel btnPanel = new JPanel();
-        addButton(btnPanel, "刷新", e -> refresh());
-        addButton(btnPanel, "取消预约", e -> cancel());
-        add(btnPanel, BorderLayout.SOUTH);
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(null);
+        add(Ui.header("我的预约",
+                Ui.actionDanger("取消预约", e -> cancel()),
+                Ui.action("刷新", e -> refresh())), BorderLayout.NORTH);
+        add(Ui.card(sp), BorderLayout.CENTER);
 
         refresh();
-    }
-
-    private void addButton(JPanel panel, String text, ActionListener listener)
-    {
-        JButton b = new JButton(text);
-        b.addActionListener(listener);
-        panel.add(b);
     }
 
     private void refresh()

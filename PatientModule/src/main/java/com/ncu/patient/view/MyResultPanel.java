@@ -1,10 +1,12 @@
 package com.ncu.patient.view;
 
+import com.ncu.common.ui.Ui;
 import com.ncu.patient.controller.PatientController;
 import com.ncu.patient.model.RegistrationVO;
 import com.ncu.patient.model.ResultVO;
+import com.ncu.report.view.ReportFrame;
 
-import javax.swing.JButton;
+import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -12,6 +14,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.List;
 
@@ -32,17 +35,8 @@ public class MyResultPanel extends JPanel
     {
         this.tel = tel;
         setLayout(new BorderLayout());
-
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        top.add(new JLabel("选择预约:"));
-        top.add(regBox);
-        JButton query = new JButton("查看结果");
-        query.addActionListener(e -> query());
-        top.add(query);
-        JButton refresh = new JButton("刷新");
-        refresh.addActionListener(e -> refreshRegs());
-        top.add(refresh);
-        add(top, BorderLayout.NORTH);
+        Ui.content(this);
+        setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
 
         tableModel = new DefaultTableModel(columns, 0)
         {
@@ -52,8 +46,34 @@ public class MyResultPanel extends JPanel
                 return false;
             }
         };
-        table = new JTable(tableModel);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        table = Ui.table(tableModel);
+
+        // 页头：左侧标题，右侧 选择预约 + 动作
+        JPanel bar = new JPanel(new BorderLayout());
+        bar.setBackground(Ui.CONTENT_BG);
+        bar.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        west.setOpaque(false);
+        west.add(Ui.title("我的结果"));
+        bar.add(west, BorderLayout.WEST);
+
+        JPanel east = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        east.setOpaque(false);
+        JLabel sel = new JLabel("选择预约:");
+        sel.setFont(Ui.font(13));
+        east.add(sel);
+        regBox.setPreferredSize(new Dimension(280, 28));
+        east.add(regBox);
+        east.add(Ui.actionPrimary("查看结果", e -> query()));
+        east.add(Ui.action("打印报告", e -> new ReportFrame(tel).setVisible(true)));
+        east.add(Ui.action("刷新", e -> refreshRegs()));
+        bar.add(east, BorderLayout.EAST);
+        add(bar, BorderLayout.NORTH);
+
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(null);
+        add(Ui.card(sp), BorderLayout.CENTER);
 
         refreshRegs();
     }

@@ -3,15 +3,15 @@ package com.ncu.admin.view;
 import com.ncu.admin.controller.AdminController;
 import com.ncu.common.model.CheckGroup;
 import com.ncu.common.model.CheckItem;
+import com.ncu.common.ui.Ui;
 
-import javax.swing.JButton;
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
@@ -27,6 +27,8 @@ public class CheckGroupPanel extends JPanel
     public CheckGroupPanel()
     {
         setLayout(new BorderLayout());
+        Ui.content(this);
+        setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
 
         tableModel = new DefaultTableModel(columns, 0)
         {
@@ -36,26 +38,20 @@ public class CheckGroupPanel extends JPanel
                 return false;
             }
         };
-        table = new JTable(tableModel);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        table = Ui.table(tableModel);
 
-        JPanel btnPanel = new JPanel();
-        addButton(btnPanel, "刷新", e -> refresh());
-        addButton(btnPanel, "新增", e -> addGroup());
-        addButton(btnPanel, "修改", e -> editGroup());
-        addButton(btnPanel, "删除", e -> deleteGroup());
-        addButton(btnPanel, "添加检查项", e -> addItem());
-        addButton(btnPanel, "查看明细", e -> showDetail());
-        add(btnPanel, BorderLayout.SOUTH);
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(null);
+        add(Ui.header("套餐管理",
+                Ui.actionPrimary("新增套餐", e -> addGroup()),
+                Ui.action("刷新", e -> refresh()),
+                Ui.action("修改", e -> editGroup()),
+                Ui.actionDanger("删除", e -> deleteGroup()),
+                Ui.action("添加检查项", e -> addItem()),
+                Ui.action("查看明细", e -> showDetail())), BorderLayout.NORTH);
+        add(Ui.card(sp), BorderLayout.CENTER);
 
         refresh();
-    }
-
-    private void addButton(JPanel panel, String text, ActionListener listener)
-    {
-        JButton b = new JButton(text);
-        b.addActionListener(listener);
-        panel.add(b);
     }
 
     private void refresh()

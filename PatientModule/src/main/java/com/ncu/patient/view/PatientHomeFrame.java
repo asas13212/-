@@ -1,26 +1,23 @@
 package com.ncu.patient.view;
 
-import javax.swing.JFrame;
-import javax.swing.JTabbedPane;
+import com.ncu.common.ui.HomeBaseFrame;
 
 /**
- * 患者主窗口：用选项卡组织套餐浏览 / 我的预约 / 我的结果 / 个人资料
+ * 患者主窗口：左侧导航（套餐浏览 / 我的预约 / 我的结果 / 个人资料）+ 右侧内容区
  */
-public class PatientHomeFrame extends JFrame
+public class PatientHomeFrame extends HomeBaseFrame
 {
     public PatientHomeFrame(String tel, String name)
     {
-        setTitle("健康体检管理系统 - 患者(" + name + ")");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        this(tel, name, null);
+    }
 
-        JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("套餐浏览", new PackagePanel(tel));
-        tabs.addTab("我的预约", new MyRegistrationPanel(tel));
-        tabs.addTab("我的结果", new MyResultPanel(tel));
-        tabs.addTab("个人资料", new ProfilePanel(tel));
-        add(tabs);
-
-        setSize(840, 600);
-        setLocationRelativeTo(null);
+    public PatientHomeFrame(String tel, String name, Runnable onLogout)
+    {
+        super("健康体检管理系统 - 患者(" + name + ")", name, "患者", onLogout);
+        addNav("套餐浏览", new PackagePanel(tel));
+        addNav("我的预约", new MyRegistrationPanel(tel));
+        addNav("我的结果", new MyResultPanel(tel));
+        addNav("个人资料", new ProfilePanel(tel));
     }
 }

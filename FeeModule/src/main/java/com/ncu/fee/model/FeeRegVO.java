@@ -1,10 +1,14 @@
 package com.ncu.fee.model;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
  * 待收费预约 VO：一条还没收费记录的预约（已预约状态、且 fee 里没有对应行）
  * 字段与展示列一一对应，避免界面直接依赖多个实体
+ * <p>
+ * price = 该预约套餐(checkgroup.price)的套餐价。收费登记按套餐价直接入账，
+ * 由 FeeModule 联表查出并写回收费记录，界面不手输金额。
  */
 public class FeeRegVO
 {
@@ -13,6 +17,7 @@ public class FeeRegVO
     private String patientName; // 患者姓名
     private String gid;         // 套餐id
     private String groupName;   // 套餐名称
+    private BigDecimal price;   // 套餐价(元)
     private Date regTime;       // 预约时间
 
     public int getId()
@@ -63,6 +68,16 @@ public class FeeRegVO
     public void setGroupName(String groupName)
     {
         this.groupName = groupName;
+    }
+
+    public BigDecimal getPrice()
+    {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price)
+    {
+        this.price = price;
     }
 
     public Date getRegTime()

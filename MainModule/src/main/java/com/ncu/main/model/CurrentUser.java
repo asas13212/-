@@ -7,7 +7,7 @@ public class CurrentUser
 {
     private String tel;   // 账号(手机号)
     private String name;  // 姓名
-    private int role;     // 角色:0患者|1医生|2管理员
+    private int role;     // 角色:0患者|1医生
 
     public String getTel()
     {

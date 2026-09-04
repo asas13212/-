@@ -1,12 +1,14 @@
 package com.ncu.report.view;
 
+import com.ncu.common.ui.Ui;
+import com.ncu.common.ui.UiTheme;
 import com.ncu.report.controller.ReportController;
 import com.ncu.report.model.ReportItem;
 import com.ncu.report.model.ReportRegVO;
 import com.ncu.report.model.ReportVO;
 import com.ncu.report.util.PdfReportExporter;
 
-import javax.swing.JButton;
+import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -16,8 +18,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.border.MatteBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
@@ -43,26 +48,49 @@ public class ReportFrame extends JFrame
     public ReportFrame(String tel)
     {
         this.tel = tel;
+        UiTheme.install();
         setTitle("健康体检管理系统 - 体检报告");
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        top.add(new JLabel("选择已完成预约:"));
-        top.add(regBox);
-        JButton genBtn = new JButton("生成报告");
-        genBtn.addActionListener(e -> generate());
-        top.add(genBtn);
-        JButton printBtn = new JButton("打印");
-        printBtn.addActionListener(e -> print());
-        top.add(printBtn);
-        JButton exportBtn = new JButton("导出PDF文件");
-        exportBtn.addActionListener(e -> exportPdf());
-        top.add(exportBtn);
-        add(top, BorderLayout.NORTH);
+        JPanel page = new JPanel(new BorderLayout());
+        page.setBackground(Ui.CONTENT_BG);
+        page.setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
+        setContentPane(page);
 
+        // 页头：左侧选择已完成预约，右侧动作
+        JPanel bar = new JPanel(new BorderLayout());
+        bar.setBackground(Ui.CONTENT_BG);
+        bar.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        west.setOpaque(false);
+        JLabel sel = new JLabel("选择已完成预约:");
+        sel.setFont(Ui.font(13));
+        west.add(sel);
+        regBox.setPreferredSize(new Dimension(330, 28));
+        west.add(regBox);
+        bar.add(west, BorderLayout.WEST);
+
+        JPanel east = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        east.setOpaque(false);
+        east.add(Ui.actionPrimary("生成报告", e -> generate()));
+        east.add(Ui.action("打印", e -> print()));
+        east.add(Ui.action("导出PDF文件", e -> exportPdf()));
+        bar.add(east, BorderLayout.EAST);
+        page.add(bar, BorderLayout.NORTH);
+
+        // 白色"报告纸"：上部患者信息，中部结果表格
         headerArea.setEditable(false);
         headerArea.setOpaque(false);
-        headerArea.setFont(new java.awt.Font("微软雅黑", java.awt.Font.PLAIN, 14));
+        headerArea.setFont(Ui.font(14));
+        headerArea.setForeground(Ui.TEXT);
+
+        JPanel headerPad = new JPanel(new BorderLayout());
+        headerPad.setBackground(Color.WHITE);
+        headerPad.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(14, 20, 10, 20),
+                new MatteBorder(0, 0, 1, 0, Ui.BORDER)));
+        headerPad.add(headerArea, BorderLayout.CENTER);
 
         tableModel = new DefaultTableModel(columns, 0)
         {
@@ -72,14 +100,18 @@ public class ReportFrame extends JFrame
                 return false;
             }
         };
-        JTable table = new JTable(tableModel);
+        JTable table = Ui.table(tableModel);
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(null);
 
-        JPanel center = new JPanel(new BorderLayout());
-        center.add(headerArea, BorderLayout.NORTH);
-        center.add(new JScrollPane(table), BorderLayout.CENTER);
-        add(center, BorderLayout.CENTER);
+        JPanel sheet = new JPanel(new BorderLayout());
+        sheet.setBackground(Color.WHITE);
+        sheet.setBorder(BorderFactory.createLineBorder(Ui.BORDER));
+        sheet.add(headerPad, BorderLayout.NORTH);
+        sheet.add(sp, BorderLayout.CENTER);
+        page.add(sheet, BorderLayout.CENTER);
 
-        setSize(760, 560);
+        setSize(860, 600);
         setLocationRelativeTo(null);
 
         loadRegs();

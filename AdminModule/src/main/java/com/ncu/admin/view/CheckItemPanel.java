@@ -2,15 +2,15 @@ package com.ncu.admin.view;
 
 import com.ncu.admin.controller.AdminController;
 import com.ncu.common.model.CheckItem;
+import com.ncu.common.ui.Ui;
 
-import javax.swing.JButton;
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
-import java.awt.event.ActionListener;
 
 /**
  * 检查项管理面板
@@ -25,6 +25,8 @@ public class CheckItemPanel extends JPanel
     public CheckItemPanel()
     {
         setLayout(new BorderLayout());
+        Ui.content(this);
+        setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
 
         tableModel = new DefaultTableModel(columns, 0)
         {
@@ -34,25 +36,19 @@ public class CheckItemPanel extends JPanel
                 return false;
             }
         };
-        table = new JTable(tableModel);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        table = Ui.table(tableModel);
 
-        JPanel btnPanel = new JPanel();
-        addButton(btnPanel, "刷新", e -> refresh());
-        addButton(btnPanel, "新增", e -> addItem());
-        addButton(btnPanel, "修改", e -> editItem());
-        addButton(btnPanel, "删除", e -> deleteItem());
-        addButton(btnPanel, "上/下架", e -> toggle());
-        add(btnPanel, BorderLayout.SOUTH);
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(null);
+        add(Ui.header("检查项管理",
+                Ui.actionPrimary("新增", e -> addItem()),
+                Ui.action("刷新", e -> refresh()),
+                Ui.action("修改", e -> editItem()),
+                Ui.actionDanger("删除", e -> deleteItem()),
+                Ui.action("上/下架", e -> toggle())), BorderLayout.NORTH);
+        add(Ui.card(sp), BorderLayout.CENTER);
 
         refresh();
-    }
-
-    private void addButton(JPanel panel, String text, ActionListener listener)
-    {
-        JButton b = new JButton(text);
-        b.addActionListener(listener);
-        panel.add(b);
     }
 
     private void refresh()

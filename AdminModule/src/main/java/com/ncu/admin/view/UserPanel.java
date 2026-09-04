@@ -2,15 +2,15 @@ package com.ncu.admin.view;
 
 import com.ncu.admin.controller.AdminController;
 import com.ncu.common.model.User;
+import com.ncu.common.ui.Ui;
 
-import javax.swing.JButton;
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
-import java.awt.event.ActionListener;
 
 /**
  * 用户管理面板
@@ -25,6 +25,8 @@ public class UserPanel extends JPanel
     public UserPanel()
     {
         setLayout(new BorderLayout());
+        Ui.content(this);
+        setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
 
         tableModel = new DefaultTableModel(columns, 0)
         {
@@ -34,23 +36,17 @@ public class UserPanel extends JPanel
                 return false;
             }
         };
-        table = new JTable(tableModel);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        table = Ui.table(tableModel);
 
-        JPanel btnPanel = new JPanel();
-        addButton(btnPanel, "刷新", e -> refresh());
-        addButton(btnPanel, "只看患者", e -> refreshPatients());
-        addButton(btnPanel, "删除用户", e -> deleteUser());
-        add(btnPanel, BorderLayout.SOUTH);
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(null);
+        add(Ui.header("用户管理",
+                Ui.actionPrimary("刷新", e -> refresh()),
+                Ui.action("只看患者", e -> refreshPatients()),
+                Ui.actionDanger("删除用户", e -> deleteUser())), BorderLayout.NORTH);
+        add(Ui.card(sp), BorderLayout.CENTER);
 
         refresh();
-    }
-
-    private void addButton(JPanel panel, String text, ActionListener listener)
-    {
-        JButton b = new JButton(text);
-        b.addActionListener(listener);
-        panel.add(b);
     }
 
     private void refresh()
@@ -97,7 +93,6 @@ public class UserPanel extends JPanel
         {
             case 0: return "患者";
             case 1: return "医生";
-            case 2: return "管理员";
             default: return "未知";
         }
     }

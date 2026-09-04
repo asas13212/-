@@ -1,16 +1,19 @@
 package com.ncu.fee.view;
 
+import com.ncu.common.ui.Ui;
 import com.ncu.fee.controller.FeeController;
 import com.ncu.fee.model.FeeVO;
 
-import javax.swing.JButton;
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import java.awt.Component;
 import java.text.SimpleDateFormat;
 
 /**
@@ -26,6 +29,8 @@ public class FeeListPanel extends JPanel
     public FeeListPanel()
     {
         setLayout(new BorderLayout());
+        Ui.content(this);
+        setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
 
         tableModel = new DefaultTableModel(columns, 0)
         {
@@ -35,15 +40,16 @@ public class FeeListPanel extends JPanel
                 return false;
             }
         };
-        table = new JTable(tableModel);
-        // 状态列单元格存数字(0/1/2)，用渲染器显示成中文
-        table.getColumnModel().getColumn(5).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer()
+        table = Ui.table(tableModel);
+
+        // 状态列单元格存数字(0/1/2)，用渲染器显示成中文并居中
+        DefaultTableCellRenderer statusRenderer = new DefaultTableCellRenderer()
         {
             @Override
-            public java.awt.Component getTableCellRendererComponent(JTable t, Object value,
+            public Component getTableCellRendererComponent(JTable t, Object value,
                     boolean isSelected, boolean hasFocus, int row, int column)
             {
-                java.awt.Component c = super.getTableCellRendererComponent(
+                Component c = super.getTableCellRendererComponent(
                         t, value, isSelected, hasFocus, row, column);
                 if (value instanceof Integer)
                 {
@@ -51,17 +57,17 @@ public class FeeListPanel extends JPanel
                 }
                 return c;
             }
-        });
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        };
+        statusRenderer.setFont(Ui.font(13));
+        statusRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        table.getColumnModel().getColumn(5).setCellRenderer(statusRenderer);
 
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton refresh = new JButton("刷新");
-        refresh.addActionListener(e -> refresh());
-        btnPanel.add(refresh);
-        JButton refund = new JButton("退款");
-        refund.addActionListener(e -> refund());
-        btnPanel.add(refund);
-        add(btnPanel, BorderLayout.SOUTH);
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(null);
+        add(Ui.header("收费记录",
+                Ui.actionDanger("退款", e -> refund()),
+                Ui.action("刷新", e -> refresh())), BorderLayout.NORTH);
+        add(Ui.card(sp), BorderLayout.CENTER);
 
         refresh();
     }

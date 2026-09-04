@@ -162,6 +162,7 @@ public class CheckGroupDao
         g.setGname(rs.getString("gname"));
         g.setBh(rs.getString("bh"));
         g.setRemark(rs.getString("remark"));
+        g.setPrice(rs.getBigDecimal("price"));
         g.setStatus(rs.getInt("status"));
         return g;
     }
