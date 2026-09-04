@@ -3,7 +3,6 @@ package com.ncu.patient.view;
 import com.ncu.patient.controller.PatientController;
 import com.ncu.patient.model.RegistrationVO;
 import com.ncu.patient.model.ResultVO;
-import com.ncu.report.view.ReportFrame;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -43,9 +42,6 @@ public class MyResultPanel extends JPanel
         JButton refresh = new JButton("刷新");
         refresh.addActionListener(e -> refreshRegs());
         top.add(refresh);
-        JButton reportBtn = new JButton("打印报告");
-        reportBtn.addActionListener(e -> new ReportFrame(tel).setVisible(true));
-        top.add(reportBtn);
         add(top, BorderLayout.NORTH);
 
         tableModel = new DefaultTableModel(columns, 0)
