@@ -13,6 +13,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -24,7 +25,7 @@ public class PackagePanel extends JPanel
     private final String tel;
     private final DefaultTableModel tableModel;
     private final JTable table;
-    private final String[] columns = {"编号", "套餐名", "备注"};
+    private final String[] columns = {"编号", "套餐名", "费用(元)", "备注"};
     private List<CheckGroup> groups;
 
     public PackagePanel(String tel)
@@ -61,8 +62,14 @@ public class PackagePanel extends JPanel
         groups = controller.listPackages();
         for (CheckGroup g : groups)
         {
-            tableModel.addRow(new Object[]{g.getBh(), g.getGname(), g.getRemark()});
+            tableModel.addRow(new Object[]{g.getBh(), g.getGname(), formatPrice(g.getPrice()), g.getRemark()});
         }
+    }
+
+    /** 套餐价展示：null 视为未定价 */
+    private String formatPrice(BigDecimal price)
+    {
+        return price == null ? "未定价" : "¥" + price.toPlainString();
     }
 
     private CheckGroup selectedGroup()
@@ -83,7 +90,8 @@ public class PackagePanel extends JPanel
         List<CheckItem> items = controller.listGroupItems(g.getGid());
         StringBuilder sb = new StringBuilder();
         sb.append("套餐：").append(g.getGname()).append("\n");
-        sb.append("编号：").append(g.getBh() == null ? "" : g.getBh()).append("\n\n");
+        sb.append("编号：").append(g.getBh() == null ? "" : g.getBh()).append("\n");
+        sb.append("费用：").append(formatPrice(g.getPrice())).append("\n\n");
         if (items.isEmpty())
         {
             sb.append("该套餐暂无检查项。");
@@ -119,7 +127,7 @@ public class PackagePanel extends JPanel
             JOptionPane.showMessageDialog(this, "您已预约过该套餐（进行中），请先取消原预约。");
             return;
         }
-        int r = JOptionPane.showConfirmDialog(this, "确定预约套餐「" + g.getGname() + "」吗？",
+        int r = JOptionPane.showConfirmDialog(this, "确定预约套餐「" + g.getGname() + "」吗？\n费用：" + formatPrice(g.getPrice()),
                 "确认预约", JOptionPane.OK_CANCEL_OPTION);
         if (r != JOptionPane.OK_OPTION) return;
         if (controller.register(tel, g.getGid()))
