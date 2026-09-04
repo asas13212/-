@@ -1,15 +1,14 @@
 package com.ncu.patient.controller;
 
 import com.ncu.common.dao.CheckGroupDao;
-import com.ncu.common.dao.RegistrationDao;
 import com.ncu.common.dao.UserDao;
 import com.ncu.common.model.CheckGroup;
 import com.ncu.common.model.CheckItem;
-import com.ncu.common.model.Registration;
 import com.ncu.common.model.User;
 import com.ncu.patient.dao.PatientDao;
 import com.ncu.patient.model.RegistrationVO;
 import com.ncu.patient.model.ResultVO;
+import com.ncu.patient.model.TrendItem;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -21,7 +20,6 @@ import java.util.List;
 public class PatientController
 {
     private final CheckGroupDao groupDao = new CheckGroupDao();
-    private final RegistrationDao regDao = new RegistrationDao();
     private final UserDao userDao = new UserDao();
     private final PatientDao patientDao = new PatientDao();
 
@@ -66,14 +64,9 @@ public class PatientController
         return false;
     }
 
-    public boolean register(String tel, String gid)
+    public boolean register(String tel, String gid, Date regTime, String location)
     {
-        Registration r = new Registration();
-        r.setTel(tel);
-        r.setGid(gid);
-        r.setRegTime(new Date());
-        r.setStatus(0);
-        return regDao.insert(r);
+        return patientDao.insertRegistration(tel, gid, regTime, location);
     }
 
     /** 取消预约：把状态改成 2(已取消) */
@@ -92,6 +85,13 @@ public class PatientController
     public List<ResultVO> listResults(int regId)
     {
         return patientDao.findResultsByRegId(regId);
+    }
+
+    // ===== 健康趋势 =====
+
+    public List<TrendItem> listHistory(String tel)
+    {
+        return patientDao.findHistory(tel);
     }
 
     // ===== 个人资料 =====

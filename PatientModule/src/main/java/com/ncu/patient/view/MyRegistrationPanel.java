@@ -11,10 +11,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 /**
- * 我的预约面板：查看自己的预约、取消进行中的预约
+ * 我的预约面板：查看自己的预约（含时间/地点）、取消进行中的预约
  */
 public class MyRegistrationPanel extends JPanel
 {
@@ -22,8 +23,9 @@ public class MyRegistrationPanel extends JPanel
     private final String tel;
     private final DefaultTableModel tableModel;
     private final JTable table;
-    private final String[] columns = {"预约id", "套餐名", "预约时间", "状态"};
+    private final String[] columns = {"预约id", "套餐名", "预约时间", "体检地点", "状态"};
     private List<RegistrationVO> regs;
+    private static final SimpleDateFormat TIME_FMT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     public MyRegistrationPanel(String tel)
     {
@@ -41,6 +43,7 @@ public class MyRegistrationPanel extends JPanel
             }
         };
         table = Ui.table(tableModel);
+        table.setShowVerticalLines(true);
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(null);
@@ -58,7 +61,9 @@ public class MyRegistrationPanel extends JPanel
         regs = controller.listMyRegistrations(tel);
         for (RegistrationVO r : regs)
         {
-            tableModel.addRow(new Object[]{r.getId(), r.getGroupName(), r.getRegTime(), statusText(r.getStatus())});
+            tableModel.addRow(new Object[]{r.getId(), r.getGroupName(),
+                    r.getRegTime() == null ? "" : TIME_FMT.format(r.getRegTime()),
+                    r.getLocation(), statusText(r.getStatus())});
         }
     }
 

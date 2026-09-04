@@ -47,6 +47,7 @@ public class MyResultPanel extends JPanel
             }
         };
         table = Ui.table(tableModel);
+        table.setShowVerticalLines(true);
 
         // 页头：左侧标题，右侧 选择预约 + 动作
         JPanel bar = new JPanel(new BorderLayout());
@@ -55,7 +56,7 @@ public class MyResultPanel extends JPanel
 
         JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         west.setOpaque(false);
-        west.add(Ui.title("我的结果"));
+        west.add(Ui.title("体检报告"));
         bar.add(west, BorderLayout.WEST);
 
         JPanel east = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));

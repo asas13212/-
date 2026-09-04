@@ -34,7 +34,7 @@ healthysystem（父 pom）
 ├─ Common        实体/DAO/JdbcUtil ——✅已完成，谁都能依赖
 ├─ MainModule    系统总入口：含唯一登录窗（背景图）+ 登录后按 role 打开各模块主窗 ——✅已跑通(0患者/1医生)
 ├─ AdminModule   后台（role1 医生，含原管理员职责） ——🟡基本完成(检查项/套餐/用户/预约/结果录入/收费)
-├─ PatientModule 患者端 ——🟡基本完成(套餐浏览/预约/结果/资料/打印报告)，独立运行 PatientMain
+├─ PatientModule 患者端 ——🟡基本完成(体检预约/我的预约/体检报告/健康趋势/资料；预约选时间地点)，独立运行 PatientMain
 ├─ ReportModule  报告模块 ——🟡基本完成(报告预览/打印/导出PDF)，独立运行 ReportMain
 ├─ FeeModule     收费管理(队长维护)：收费登记/收费记录/退款 ——✅已完成，收费面板已并入 AdminModule 后台页签，另保留独立入口 FeeMain
 └─ Sources/      设计素材源图（如登录背景 login-bg-source.png）
@@ -76,7 +76,7 @@ healthysystem（父 pom）
 | **Common** | ✅ 完成 | 6 实体、6 DAO、`JdbcUtil`。需要读写先查 §5，别重复造轮子。 |
 | **MainModule** | ✅ 登录入口已通 | 唯一登录窗（账号+密码，账号即注册手机号，背景图在 `MainModule/src/main/resources/login_background.png`，源图在 `Sources/login-bg-source.png`）。登录成功按 role 打开对应主窗：role0→`PatientHomeFrame`；role1 医生（含原管理员职责）→ `AdminFrame` 后台窗。**各角色模块不再自己做登录。** |
 | **AdminModule** | 🟡 基本完成 | **医生(role1，含原管理员职责)**：维护检查项/套餐及关联、用户管理、预约状态、给预约录 `check_result`（"结果录入"）、收费登记/记录。role1 医生登录进 `AdminFrame` 后台窗（侧边导航七个页签），不再单独开医生窗。 |
-| **PatientModule** | 🟡 基本完成 | 患者：浏览套餐、预约/取消、看自己结果、改资料；主窗 `PatientHomeFrame(tel,name)` 已接 LoginFrame。报告入口在「我的结果」→ 打印报告（打开 `ReportFrame`）。独立运行 `PatientMain`（演示患者 13700137000）。 |
+| **PatientModule** | 🟡 基本完成 | 患者：体检预约（可选日期/整点时间/地点）、我的预约、体检报告、健康趋势（折线图看历次检查项变化）、改资料；主窗 `PatientHomeFrame(tel,name)` 已接 LoginFrame。报告入口在「体检报告」→ 打印报告（打开 `ReportFrame`）。独立运行 `PatientMain`（演示患者 13700137000）。 |
 | **ReportModule** | 🟡 基本完成 | 按预约汇总结果出报告：预览 + 打印（`java.awt.print`）+ 导出 PDF（OpenPDF，中文用 `STSong-Light`）。独立运行 `ReportMain`（演示患者 13700137000）。 |
 | **FeeModule** | ✅ 已完成(队长) | 收费台：对"已预约且尚未收费"的预约收费入账（写 `fee`，状态 1 已缴）、查看收费记录、退款（置 2 已退款）。**收费面板已并入 AdminModule 后台页签**（AdminModule 依赖 FeeModule，`AdminFrame` 增加「收费登记/收费记录」两页签，用登录 tel 作收费员）；另保留独立入口 `com.ncu.fee.FeeMain`。 |
 | **MainModule 的 role 分发** | ✅ 已接 | `LoginFrame.onLogin()` switch：case 0→`PatientHomeFrame`；case 1（医生）→ `AdminFrame`。 |

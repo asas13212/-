@@ -5,16 +5,18 @@ import com.ncu.common.model.CheckItem;
 import com.ncu.common.util.JdbcUtil;
 import com.ncu.patient.model.RegistrationVO;
 import com.ncu.patient.model.ResultVO;
+import com.ncu.patient.model.TrendItem;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
- * 患者专用数据访问类：套餐明细、我的预约、检查结果的联表查询 + 状态更新
+ * 患者专用数据访问类：套餐明细、我的预约、检查结果的联表查询 + 预约写入 + 状态更新
  */
 public class PatientDao
 {
@@ -77,10 +79,37 @@ public class PatientDao
         return list;
     }
 
-    /** 查某患者的全部预约，带套餐名称 */
+    /** 新增预约（带体检地点，状态固定为 0 已预约） */
+    public boolean insertRegistration(String tel, String gid, Date regTime, String location)
+    {
+        String sql = "INSERT INTO registration(tel, gid, reg_time, location, status) VALUES(?,?,?,?,0)";
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try
+        {
+            conn = JdbcUtil.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, tel);
+            ps.setString(2, gid);
+            ps.setTimestamp(3, regTime == null ? null : new java.sql.Timestamp(regTime.getTime()));
+            ps.setString(4, location);
+            return ps.executeUpdate() > 0;
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            JdbcUtil.close(conn, ps, null);
+        }
+        return false;
+    }
+
+    /** 查某患者的全部预约，带套餐名称 + 体检地点 */
     public List<RegistrationVO> findMyRegistrations(String tel)
     {
-        String sql = "SELECT r.id, r.gid, g.gname AS group_name, r.reg_time, r.status " +
+        String sql = "SELECT r.id, r.gid, g.gname AS group_name, r.reg_time, r.location, r.status " +
                 "FROM registration r JOIN checkgroup g ON g.gid = r.gid " +
                 "WHERE r.tel = ? ORDER BY r.reg_time DESC";
         List<RegistrationVO> list = new ArrayList<>();
@@ -166,6 +195,45 @@ public class PatientDao
         return false;
     }
 
+    /** 查某患者的全部检查结果历史（按检查项、时间排序），用于健康趋势 */
+    public List<TrendItem> findHistory(String tel)
+    {
+        String sql = "SELECT cr.cid, ci.cname, ci.dw, ci.ckfw, cr.result_value, cr.check_time " +
+                "FROM check_result cr JOIN checkitem ci ON ci.cid = cr.cid " +
+                "WHERE cr.tel = ? ORDER BY cr.cid, cr.check_time";
+        List<TrendItem> list = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try
+        {
+            conn = JdbcUtil.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, tel);
+            rs = ps.executeQuery();
+            while (rs.next())
+            {
+                TrendItem t = new TrendItem();
+                t.setCid(rs.getString("cid"));
+                t.setCname(rs.getString("cname"));
+                t.setDw(rs.getString("dw"));
+                t.setResultValue(rs.getString("result_value"));
+                t.setCkfw(rs.getString("ckfw"));
+                t.setCheckTime(rs.getTimestamp("check_time"));
+                list.add(t);
+            }
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            JdbcUtil.close(conn, ps, rs);
+        }
+        return list;
+    }
+
     private CheckGroup mapGroup(ResultSet rs) throws SQLException
     {
         CheckGroup g = new CheckGroup();
@@ -197,6 +265,7 @@ public class PatientDao
         vo.setGid(rs.getString("gid"));
         vo.setGroupName(rs.getString("group_name"));
         vo.setRegTime(rs.getTimestamp("reg_time"));
+        vo.setLocation(rs.getString("location"));
         vo.setStatus(rs.getInt("status"));
         return vo;
     }
