@@ -50,16 +50,18 @@ CREATE TABLE checkgroup_item (
     FOREIGN KEY (cid) REFERENCES checkitem(cid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 5. 预约表（患者预约一个套餐做体检）
+-- 5. 预约表（患者预约一个套餐，或单项预约一个具体检查项）
 CREATE TABLE registration (
     id       INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键id',
     tel      VARCHAR(11) COMMENT '患者账号',
-    gid      VARCHAR(50) COMMENT '套餐id',
+    gid      VARCHAR(50) COMMENT '套餐id(单项预约时为空)',
+    cid      VARCHAR(50) COMMENT '检查项id(单项预约时用)',
     reg_time DATETIME    COMMENT '预约时间',
     location VARCHAR(50) COMMENT '体检地点',
     status   INT         COMMENT '状态:0已预约|1已完成|2已取消',
     FOREIGN KEY (tel) REFERENCES users(tel),
-    FOREIGN KEY (gid) REFERENCES checkgroup(gid)
+    FOREIGN KEY (gid) REFERENCES checkgroup(gid),
+    FOREIGN KEY (cid) REFERENCES checkitem(cid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 6. 检查结果表（医生对预约逐项录入结果，也是报告的数据源）

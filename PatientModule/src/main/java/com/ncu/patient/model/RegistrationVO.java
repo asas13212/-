@@ -3,13 +3,14 @@ package com.ncu.patient.model;
 import java.util.Date;
 
 /**
- * 患者端预约 VO：预约 + 套餐名称 + 体检地点（联表查询结果）
+ * 患者端预约 VO：预约 + 套餐/检查项名称 + 体检地点（联表查询结果）
  */
 public class RegistrationVO
 {
     private int id;           // 预约id
-    private String gid;       // 套餐id
-    private String groupName; // 套餐名称
+    private String gid;       // 套餐id(单项预约时为空)
+    private String cid;       // 检查项id(单项预约时用)
+    private String groupName; // 套餐名称或检查项名称
     private Date regTime;     // 预约时间
     private String location;  // 体检地点
     private int status;       // 状态:0已预约|1已完成|2已取消
@@ -32,6 +33,16 @@ public class RegistrationVO
     public void setGid(String gid)
     {
         this.gid = gid;
+    }
+
+    public String getCid()
+    {
+        return cid;
+    }
+
+    public void setCid(String cid)
+    {
+        this.cid = cid;
     }
 
     public String getGroupName()

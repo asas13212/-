@@ -43,7 +43,7 @@ public class AppointmentDialog extends JDialog
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(6, 6, 6, 6);
 
-        addRow(form, c, 0, "套餐：", new JLabel(groupName));
+        addRow(form, c, 0, "项目：", new JLabel(groupName));
         addRow(form, c, 1, "费用：", new JLabel(priceText));
 
         LocalDate start = LocalDate.now();

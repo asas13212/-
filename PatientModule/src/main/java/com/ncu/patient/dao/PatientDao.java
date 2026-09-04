@@ -106,11 +106,40 @@ public class PatientDao
         return false;
     }
 
-    /** 查某患者的全部预约，带套餐名称 + 体检地点 */
+    /** 新增单项预约（指定检查项，gid 为空，状态固定为 0 已预约） */
+    public boolean insertSingleRegistration(String tel, String cid, Date regTime, String location)
+    {
+        String sql = "INSERT INTO registration(tel, cid, reg_time, location, status) VALUES(?,?,?,?,0)";
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try
+        {
+            conn = JdbcUtil.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, tel);
+            ps.setString(2, cid);
+            ps.setTimestamp(3, regTime == null ? null : new java.sql.Timestamp(regTime.getTime()));
+            ps.setString(4, location);
+            return ps.executeUpdate() > 0;
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            JdbcUtil.close(conn, ps, null);
+        }
+        return false;
+    }
+
+    /** 查某患者的全部预约，带套餐/检查项名称 + 体检地点 */
     public List<RegistrationVO> findMyRegistrations(String tel)
     {
-        String sql = "SELECT r.id, r.gid, g.gname AS group_name, r.reg_time, r.location, r.status " +
-                "FROM registration r JOIN checkgroup g ON g.gid = r.gid " +
+        String sql = "SELECT r.id, r.gid, r.cid, COALESCE(g.gname, ci.cname) AS item_name, r.reg_time, r.location, r.status " +
+                "FROM registration r " +
+                "LEFT JOIN checkgroup g ON g.gid = r.gid " +
+                "LEFT JOIN checkitem ci ON ci.cid = r.cid " +
                 "WHERE r.tel = ? ORDER BY r.reg_time DESC";
         List<RegistrationVO> list = new ArrayList<>();
         Connection conn = null;
@@ -263,7 +292,8 @@ public class PatientDao
         RegistrationVO vo = new RegistrationVO();
         vo.setId(rs.getInt("id"));
         vo.setGid(rs.getString("gid"));
-        vo.setGroupName(rs.getString("group_name"));
+        vo.setCid(rs.getString("cid"));
+        vo.setGroupName(rs.getString("item_name"));
         vo.setRegTime(rs.getTimestamp("reg_time"));
         vo.setLocation(rs.getString("location"));
         vo.setStatus(rs.getInt("status"));

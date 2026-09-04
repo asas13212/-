@@ -23,7 +23,7 @@ public class MyRegistrationPanel extends JPanel
     private final String tel;
     private final DefaultTableModel tableModel;
     private final JTable table;
-    private final String[] columns = {"预约id", "套餐名", "预约时间", "体检地点", "状态"};
+    private final String[] columns = {"预约id", "预约项目", "预约时间", "体检地点", "状态"};
     private List<RegistrationVO> regs;
     private static final SimpleDateFormat TIME_FMT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 

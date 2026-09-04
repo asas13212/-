@@ -81,6 +81,7 @@ public class PackagePanel extends JPanel
 
         add(Ui.header("体检预约",
                 Ui.actionPrimary("预约", e -> register()),
+                Ui.action("单项预约", e -> openSingleItem()),
                 Ui.action("刷新", e -> refresh())), BorderLayout.NORTH);
         add(split, BorderLayout.CENTER);
 
@@ -192,5 +193,11 @@ public class PackagePanel extends JPanel
         {
             JOptionPane.showMessageDialog(this, "预约失败");
         }
+    }
+
+    private void openSingleItem()
+    {
+        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+        new SingleItemDialog(owner, tel).setVisible(true);
     }
 }
