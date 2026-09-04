@@ -23,6 +23,7 @@ public class AdminFrame extends HomeBaseFrame
         addNav("套餐管理", new CheckGroupPanel());
         addNav("用户管理", new UserPanel());
         addNav("预约管理", new RegistrationPanel());
+        addNav("预约日历", new CalendarPanel());
         addNav("结果录入", new CheckResultPanel(tel));
         addNav("收费登记", new ChargePanel(tel));
         addNav("收费记录", new FeeListPanel());
